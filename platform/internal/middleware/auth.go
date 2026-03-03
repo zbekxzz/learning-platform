@@ -14,12 +14,19 @@ func JWT() gin.HandlerFunc {
 
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "no token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
 			c.Abort()
 			return
 		}
 
-		tokenString := strings.Split(authHeader, " ")[1]
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token format"})
+			c.Abort()
+			return
+		}
+
+		tokenString := parts[1]
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			return []byte(os.Getenv("JWT_SECRET")), nil
@@ -30,6 +37,11 @@ func JWT() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
+		claims := token.Claims.(jwt.MapClaims)
+
+		c.Set("user_id", int64(claims["user_id"].(float64)))
+		c.Set("role", claims["role"].(string))
 
 		c.Next()
 	}

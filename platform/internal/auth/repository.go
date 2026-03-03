@@ -35,3 +35,19 @@ func GetUserByEmail(email string) (*User, error) {
 
 	return &user, nil
 }
+
+func GetUserByID(id int64) (*User, error) {
+	query := `
+	SELECT id, full_name, email, password_hash, role
+	FROM users WHERE id=$1`
+
+	row := database.DB.QueryRow(context.Background(), query, id)
+
+	var user User
+	err := row.Scan(&user.ID, &user.FullName, &user.Email, &user.PasswordHash, &user.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}

@@ -9,6 +9,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+
+	"platform/internal/courses"
+	"platform/internal/middleware"
 )
 
 func main() {
@@ -24,6 +27,11 @@ func main() {
 
 	api := r.Group("/api")
 	auth.RegisterRoutes(api)
+
+	protected := api.Group("/")
+	protected.Use(middleware.JWT())
+
+	courses.RegisterRoutes(protected)
 
 	port := os.Getenv("PORT")
 	if port == "" {
