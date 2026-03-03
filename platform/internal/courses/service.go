@@ -31,3 +31,12 @@ func PublishCourse(id int64, role string) error {
 
 	return Publish(id)
 }
+
+func DeleteCourse(id int64, role string) error {
+
+	if role != "admin" {
+		return errors.New("forbidden")
+	}
+
+	return SoftDelete(id)
+}

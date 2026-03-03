@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"platform/internal/courses"
+	"platform/internal/enrollments"
 	"platform/internal/middleware"
 )
 
@@ -27,11 +28,13 @@ func main() {
 
 	api := r.Group("/api")
 	auth.RegisterRoutes(api)
+	courses.RegisterPublicRoutes(api)
 
 	protected := api.Group("/")
 	protected.Use(middleware.JWT())
 
-	courses.RegisterRoutes(protected)
+	courses.RegisterProtectedRoutes(protected)
+	enrollments.RegisterRoutes(protected)
 
 	port := os.Getenv("PORT")
 	if port == "" {
