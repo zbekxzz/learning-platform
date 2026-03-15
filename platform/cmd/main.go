@@ -25,8 +25,9 @@ func main() {
 	database.Connect()
 
 	r := gin.Default()
+	r.RedirectTrailingSlash = false
 
-	api := r.Group("/api")
+	api := r.Group("/api/v1")
 	auth.RegisterRoutes(api)
 	courses.RegisterPublicRoutes(api)
 

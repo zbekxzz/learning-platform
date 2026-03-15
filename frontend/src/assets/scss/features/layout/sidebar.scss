@@ -1,0 +1,18 @@
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: #111827;
+  color: white;
+  padding: 20px;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.menu a {
+  color: white;
+  text-decoration: none;
+}

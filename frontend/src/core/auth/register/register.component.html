@@ -1,0 +1,65 @@
+<div class="custom-container-fluid">
+  <div class="login">
+    <div class="login-container">
+      <div class="login-content">
+        <h2 class="login__title">Создать аккаунт</h2>
+
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="login__form">
+
+          <h2 class="login__title mb-5">Регистрация</h2>
+
+          <div class="input__group">
+            <input
+              type="text"
+              formControlName="full_name"
+              class="input__field"
+              placeholder="ФИО"
+              required
+            />
+          </div>
+
+          <div class="input__group">
+            <input
+              type="email"
+              formControlName="email"
+              class="input__field"
+              placeholder="Email"
+              required
+            />
+          </div>
+
+          <div class="input__group">
+            <input
+              type="password"
+              formControlName="password"
+              class="input__field"
+              placeholder="Пароль"
+              autocomplete="off"
+              required
+            />
+          </div>
+
+          <div class="input__group">
+            <input
+              type="password"
+              formControlName="confirm_password"
+              class="input__field"
+              placeholder="Повторите пароль"
+              autocomplete="off"
+              required
+            />
+          </div>
+
+          <button type="submit" class="input__btn">
+            Зарегистрироваться
+          </button>
+
+          <div class="forgot-password">
+            <span (click)="goToLogin()">Уже есть аккаунт? Войти</span>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

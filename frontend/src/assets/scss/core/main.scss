@@ -1,0 +1,13 @@
+.app-layout {
+  display: flex;
+}
+
+.layout-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-container {
+  padding: 24px;
+}

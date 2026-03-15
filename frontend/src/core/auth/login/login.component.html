@@ -1,0 +1,38 @@
+<div class="custom-container-fluid">
+  <div class="login">
+    <div class="login-container">
+      <div class="login-content">
+        <h2 class="login__title">Добро пожаловать!</h2>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login__form">
+          <h2 class="login__title mb-5">Войти</h2>
+          <div class="input__group">
+            <input
+              type="text"
+              id="username"
+              formControlName="username"
+              class="input__field"
+              placeholder="Логин"
+              required
+            />
+          </div>
+          <div class="input__group">
+            <input
+              type="password"
+              id="password"
+              formControlName="password"
+              class="input__field"
+              placeholder="Пароль"
+              autocomplete="off"
+              required
+            />
+          </div>
+          <div class="forgot-password">
+            <span>забыли пароль?</span>
+          </div>
+          <button type="submit" class="input__btn">Войти</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
