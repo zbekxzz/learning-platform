@@ -6,3 +6,11 @@ export interface Course {
   is_published: boolean;
   created_at: string;
 }
+
+export interface CourseModule {
+  id: number;
+  course_id: number;
+  title: string;
+  order_index: number;
+  created_at: string;
+}

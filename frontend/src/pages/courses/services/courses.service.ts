@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ApiService } from '../../../shared/services/api.service';
 import { Observable } from 'rxjs';
-import { Course } from '../models/course.model';
+import { Course, CourseModule } from '../models/course.model';
 
 export interface CoursesResponse {
   data: Course[];
@@ -22,6 +22,10 @@ export class CoursesService {
 
   getCourse(id: number): Observable<Course> {
     return this.api.get<Course>(`/back/courses/${id}`);
+  }
+
+  getCourseModules(courseId: number): Observable<CourseModule[]> {
+    return this.api.get<CourseModule[]>(`/back/modules/course/${courseId}`);
   }
 
   enroll(courseId: number) {

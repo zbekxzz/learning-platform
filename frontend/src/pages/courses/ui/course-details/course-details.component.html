@@ -1,1 +1,49 @@
-<p>course-details works!</p>
+<div class="course-details-container">
+  @if (isLoading()) {
+    <div class="state-container loading">
+      <span class="spinner"></span>
+      <p>Загрузка курса...</p>
+    </div>
+  } @else if (error()) {
+    <div class="state-container error">
+      <p>{{ error() }}</p>
+      <button class="btn-retry" routerLink="/main/courses">Вернуться к списку</button>
+    </div>
+  } @else {
+    @if (course(); as c) {
+      <!-- Course Header -->
+      <div class="course-header">
+        <a routerLink="/main/courses" class="back-link">← Назад к списку</a>
+        <h1>{{ c.title }}</h1>
+        <p class="description">{{ c.description }}</p>
+        <div class="meta-info">
+          <span>Создан: {{ c.created_at | date:'dd.MM.yyyy' }}</span>
+        </div>
+      </div>
+
+      <!-- Modules Section -->
+      <div class="modules-section">
+        <h2>Модули курса</h2>
+        
+        @if (modules().length === 0) {
+          <div class="empty-modules">
+            <p>В этом курсе пока нет модулей.</p>
+          </div>
+        } @else {
+          <div class="modules-list">
+            @for (mod of modules(); track mod.id) {
+              <div class="module-item">
+                <div class="module-index">{{ mod.order_index }}</div>
+                <div class="module-content">
+                  <h3>{{ mod.title }}</h3>
+                  <p class="module-date">Добавлен: {{ mod.created_at | date:'dd.MM.yyyy' }}</p>
+                </div>
+                <button class="btn-secondary">Открыть модуль</button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
