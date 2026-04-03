@@ -3,6 +3,7 @@ package enrollments
 import (
 	"context"
 	"errors"
+	"platform/internal/courses"
 	"platform/internal/database"
 )
 
@@ -32,33 +33,29 @@ func Exists(userID, courseID int64) (bool, error) {
 	return exists, err
 }
 
-func GetUserEnrollments(userID int64) ([]Enrollment, error) {
+func GetUserCourses(userID int64) ([]courses.Course, error) {
 
-	query := `
-	SELECT id, user_id, course_id, enrolled_at
-	FROM enrollments
-	WHERE user_id = $1
-	ORDER BY enrolled_at DESC
-	`
+	rows, err := database.DB.Query(context.Background(), `
+		SELECT c.id, c.title, c.description, c.is_published, c.created_at
+		FROM enrollments e
+		JOIN courses c ON c.id = e.course_id
+		WHERE e.user_id = $1 AND c.deleted_at IS NULL
+	`, userID)
 
-	rows, err := database.DB.Query(context.Background(), query, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	enrollments := make([]Enrollment, 0)
+	result := make([]courses.Course, 0)
 
 	for rows.Next() {
-		var e Enrollment
-		err := rows.Scan(&e.ID, &e.UserID, &e.CourseID, &e.EnrolledAt)
-		if err != nil {
-			return nil, err
-		}
-		enrollments = append(enrollments, e)
+		var c courses.Course
+		rows.Scan(&c.ID, &c.Title, &c.Description, &c.IsPublished, &c.CreatedAt)
+		result = append(result, c)
 	}
 
-	return enrollments, nil
+	return result, nil
 }
 
 func Delete(userID, courseID int64) error {

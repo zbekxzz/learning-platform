@@ -13,7 +13,7 @@ func RegisterRoutes(rg *gin.RouterGroup) {
 
 	group.POST("/:course_id", enroll)
 	group.DELETE("/:course_id", unenroll)
-	group.GET("/my", myEnrollments)
+	group.GET("/my", getMyCourses)
 }
 
 func enroll(c *gin.Context) {
@@ -58,15 +58,15 @@ func unenroll(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "unenrolled successfully"})
 }
 
-func myEnrollments(c *gin.Context) {
+func getMyCourses(c *gin.Context) {
 
 	userID := c.GetInt64("user_id")
 
-	enrollments, err := GetMyEnrollments(userID)
+	courses, err := GetUserCourses(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot fetch enrollments"})
+		c.JSON(500, gin.H{"error": "failed"})
 		return
 	}
 
-	c.JSON(http.StatusOK, enrollments)
+	c.JSON(200, courses)
 }

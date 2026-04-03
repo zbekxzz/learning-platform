@@ -1,14 +1,35 @@
-<div class="courses-page">
+<div class="courses-container">
+  <h1>Каталог курсов</h1>
 
-  <h1>Courses</h1>
-
-  <div class="courses-grid">
-
-    <app-course-card
-      *ngFor="let course of courses"
-      [course]="course">
-    </app-course-card>
-
+  @if (isLoading()) {
+  <div class="state-container loading">
+    <span class="spinner"></span>
+    <p>Загрузка курсов...</p>
   </div>
-
+  } @else if (error()) {
+  <div class="state-container error">
+    <p>{{ error() }}</p>
+    <button class="btn-retry" (click)="loadCourses()">Попробовать снова</button>
+  </div>
+  } @else {
+  @if (courses().length === 0) {
+  <div class="state-container empty">
+    <p>Курсы пока не добавлены.</p>
+  </div>
+  } @else {
+  <div class="courses-grid">
+    @for (course of courses(); track course.id) {
+    <div class="course-card">
+      <!-- Используем поля из твоей модели course.model.ts -->
+      <h2 class="course-title">{{ course.title }}</h2>
+      <p class="course-desc">{{ course.description }}</p>
+      <div class="card-footer">
+        <span class="course-date">{{ course.created_at | date:'dd.MM.yyyy' }}</span>
+        <a [routerLink]="['/courses', course.id]" class="btn-primary">Открыть</a>
+      </div>
+    </div>
+    }
+  </div>
+  }
+  }
 </div>

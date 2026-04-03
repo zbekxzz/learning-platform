@@ -40,7 +40,3 @@ func UnenrollUser(userID, courseID int64, role string) error {
 
 	return Delete(userID, courseID)
 }
-
-func GetMyEnrollments(userID int64) ([]Enrollment, error) {
-	return GetUserEnrollments(userID)
-}

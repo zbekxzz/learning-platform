@@ -13,6 +13,8 @@ import (
 	"platform/internal/courses"
 	"platform/internal/enrollments"
 	"platform/internal/middleware"
+	"platform/internal/modules"
+	"platform/internal/tests"
 )
 
 func main() {
@@ -36,6 +38,8 @@ func main() {
 
 	courses.RegisterProtectedRoutes(protected)
 	enrollments.RegisterRoutes(protected)
+	modules.RegisterRoutes(protected)
+	tests.RegisterRoutes(protected)
 
 	port := os.Getenv("PORT")
 	if port == "" {

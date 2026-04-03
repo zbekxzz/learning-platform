@@ -1,15 +1,116 @@
-.courses-page {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+.courses-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: sans-serif;
+  color: #1f2937;
+}
+
+h1 {
+  font-size: 24px;
+  margin-bottom: 24px;
+  font-weight: 600;
 }
 
 .courses-grid {
-
   display: grid;
-
-  grid-template-columns: repeat(auto-fill, minmax(260px,1fr));
-
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
+}
 
+.course-card {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.course-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.course-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.course-desc {
+  color: #4b5563;
+  line-height: 1.5;
+  flex-grow: 1;
+  margin: 0 0 20px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  /* Ограничиваем описание в 3 строки */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.course-date {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.btn-primary,
+.btn-retry {
+  padding: 8px 16px;
+  background-color: #2563eb;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover,
+.btn-retry:hover {
+  background-color: #1d4ed8;
+}
+
+/* Состояния (Loading, Error, Empty) */
+.state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  border-radius: 12px;
+  background: #f9fafb;
+  text-align: center;
+}
+
+.state-container.error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

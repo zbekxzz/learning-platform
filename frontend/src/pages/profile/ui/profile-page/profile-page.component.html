@@ -1,0 +1,69 @@
+<div class="profile-container">
+  <h1>Профиль пользователя</h1>
+
+  @if (isLoading()) {
+  <div class="state-container loading">
+    <span class="spinner"></span>
+    <p>Загрузка профиля...</p>
+  </div>
+  } @else if (error()) {
+  <div class="state-container error">
+    <p>{{ error() }}</p>
+    <button class="btn-retry" (click)="loadProfile()">Попробовать снова</button>
+  </div>
+  } @else {
+  @if (profile(); as p) {
+  <div class="profile-card">
+    <div class="profile-avatar">
+      {{ p.full_name ? p.full_name[0].toUpperCase() : 'U' }}
+    </div>
+
+    <div class="profile-details">
+      <h2>{{ p.full_name }}</h2>
+      <p class="role-badge" [ngClass]="p.role.toLowerCase()">
+        {{ p.role }}
+      </p>
+
+      <div class="info-group">
+        <span class="label">Email:</span>
+        <span class="value">{{ p.email }}</span>
+      </div>
+    </div>
+  </div>
+  }
+  }
+
+  <div class="my-courses-section">
+    <h3>Мои курсы</h3>
+
+    @if (isLoadingCourses()) {
+    <div class="state-container loading-small">
+      <span class="spinner"></span>
+      <p>Загрузка ваших курсов...</p>
+    </div>
+    } @else if (coursesError()) {
+    <div class="state-container error">
+      <p>{{ coursesError() }}</p>
+      <button class="btn-retry" (click)="loadMyCourses()">Попробовать снова</button>
+    </div>
+    } @else {
+    @if (myCourses().length === 0) {
+    <p class="placeholder-text">У вас пока нет начатых курсов.</p>
+    } @else {
+    <div class="courses-grid">
+      @for (course of myCourses(); track course.id) {
+      <div class="course-card">
+        <h2 class="course-title">{{ course.title }}</h2>
+        <p class="course-desc">{{ course.description }}</p>
+        <div class="card-footer">
+          <span class="course-date">{{ course.created_at | date:'dd.MM.yyyy' }}</span>
+          <!-- Assuming the route is under /main/courses/course/:id -->
+          <a [routerLink]="['/main/courses/course', course.id]" class="btn-primary">К курсу</a>
+        </div>
+      </div>
+      }
+    </div>
+    }
+    }
+  </div>
+</div>
