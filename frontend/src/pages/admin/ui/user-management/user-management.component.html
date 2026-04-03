@@ -1,0 +1,106 @@
+<div class="users-container">
+  <div class="header">
+    <h1>Управление пользователями</h1>
+    <button class="btn-primary" (click)="openCreateForm()">+ Добавить пользователя</button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="state-container loading">
+      <span class="spinner"></span>
+      <p>Загрузка пользователей...</p>
+    </div>
+  } @else if (error()) {
+    <div class="state-container error">
+      <p>{{ error() }}</p>
+      <button class="btn-retry" (click)="loadUsers()">Попробовать снова</button>
+    </div>
+  } @else {
+    <div class="table-card">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>ФИО</th>
+            <th>Email</th>
+            <th>Роль</th>
+            <th class="text-right">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td class="text-gray">#{{ user.id }}</td>
+              <td class="font-medium">{{ user.full_name }}</td>
+              <td class="text-gray">{{ user.email }}</td>
+              <td>
+                <span class="role-badge" [ngClass]="user.role">{{ user.role }}</span>
+              </td>
+              <td class="actions text-right">
+                <button class="btn-icon edit" (click)="openEditForm(user)" title="Редактировать">✏️</button>
+                <button class="btn-icon delete" (click)="deleteUser(user.id)" title="Удалить">🗑️</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty-text">Пользователи не найдены</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Modal Form -->
+@if (isFormOpen()) {
+  <div class="modal-backdrop" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingUserId() ? 'Редактировать' : 'Новый' }} пользователь</h2>
+        <button class="close-btn" (click)="closeForm()">&times;</button>
+      </div>
+      
+      <form [formGroup]="userForm" (ngSubmit)="saveUser()">
+        <div class="form-group">
+          <label>ФИО</label>
+          <input type="text" formControlName="full_name" placeholder="Иванов Иван Иванович">
+          @if (userForm.get('full_name')?.invalid && userForm.get('full_name')?.touched) {
+            <span class="error-msg">Заполните ФИО</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" formControlName="email" placeholder="example@mail.com">
+          @if (userForm.get('email')?.invalid && userForm.get('email')?.touched) {
+            <span class="error-msg">Введите корректный email</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Роль</label>
+          <select formControlName="role">
+            <option value="student">Студент</option>
+            <option value="teacher">Преподаватель</option>
+            <option value="admin">Администратор</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Пароль {{ editingUserId() ? '(оставьте пустым, если не меняете)' : '*' }}</label>
+          <input type="password" formControlName="password" placeholder="Введите пароль">
+          @if (userForm.get('password')?.invalid && userForm.get('password')?.touched) {
+            <span class="error-msg">Обязательное поле для нового пользователя</span>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeForm()">Отмена</button>
+          <button type="submit" class="btn-primary" [disabled]="isSaving()">
+            {{ isSaving() ? 'Сохранение...' : 'Сохранить' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

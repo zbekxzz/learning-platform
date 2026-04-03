@@ -2,11 +2,13 @@
   <div class="login">
     <div class="login-container">
       <div class="login-content">
-        <h2 class="login__title">Создать аккаунт</h2>
+        <div class="login-logo">
+          <span class="logo-accent">Edu</span>Platform
+        </div>
 
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="login__form">
 
-          <h2 class="login__title mb-5">Регистрация</h2>
+          <h2 class="login__title">Регистрация</h2>
 
           <div class="input__group">
             <input
@@ -54,8 +56,8 @@
             Зарегистрироваться
           </button>
 
-          <div class="forgot-password">
-            <span (click)="goToLogin()">Уже есть аккаунт? Войти</span>
+          <div class="auth-footer">
+            Есть аккаунта? <a (click)="goToLogin()">Войдите</a>
           </div>
 
         </form>

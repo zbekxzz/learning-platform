@@ -2,20 +2,24 @@
   <div class="login">
     <div class="login-container">
       <div class="login-content">
-        <h2 class="login__title">Добро пожаловать!</h2>
+        <div class="login-logo">
+          <span class="logo-accent">Edu</span>Platform
+        </div>
 
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login__form">
-          <h2 class="login__title mb-5">Войти</h2>
+          <h2 class="login__title">Вход</h2>
+          
           <div class="input__group">
             <input
               type="text"
               id="username"
               formControlName="username"
               class="input__field"
-              placeholder="Логин"
+              placeholder="Логин (Email)"
               required
             />
           </div>
+          
           <div class="input__group">
             <input
               type="password"
@@ -27,10 +31,12 @@
               required
             />
           </div>
-          <div class="forgot-password">
-            <span>забыли пароль?</span>
-          </div>
+          
           <button type="submit" class="input__btn">Войти</button>
+
+          <div class="auth-footer">
+            Нет аккаунта? <a (click)="goToRegister()">Зарегистрируйтесь</a>
+          </div>
         </form>
       </div>
     </div>

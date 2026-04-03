@@ -1,19 +1,17 @@
 <div class="header">
-
   <div class="header-left">
-    <span class="title">Edu Platform</span>
+    <div class="header-logo">
+      <span class="logo-accent">Edu</span>Platform
+    </div>
   </div>
 
   <div class="header-right">
-
-    <div class="user-avatar" routerLink="/main/profile" style="cursor: pointer;">
-      B
+    <div class="user-avatar" routerLink="/main/profile" style="cursor: pointer;" title="Профиль">
+      {{ initial() }}
     </div>
 
-    <button (click)="logout()">
-      Logout
+    <button class="btn-logout" (click)="logout()">
+      Выход
     </button>
-
   </div>
-
 </div>

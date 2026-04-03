@@ -1,23 +1,35 @@
 <div class="sidebar">
 
   <div class="logo">
-    EduPlatform
+    <span class="logo-accent">Edu</span>Platform
   </div>
 
   <nav class="menu">
-
-    <a routerLink="/courses">
+    <a routerLink="/main/courses" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
       Курсы
     </a>
 
-    <a routerLink="/my-courses">
-      Мои курсы
-    </a>
+    @if (role() === 'student') {
+      <a routerLink="/main/profile" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+        Мои курсы
+      </a>
+    }
 
-    <a routerLink="/admin/courses">
-      Управление курсами
-    </a>
+    @if (role() === 'teacher') {
+      <a routerLink="/main/teacher/courses" routerLinkActive="active">
+        Управление курсами
+      </a>
+    }
 
+    @if (role() === 'admin') {
+      <a routerLink="/main/admin/courses" routerLinkActive="active">
+        Управление курсами
+      </a>
+
+      <a routerLink="/main/admin/users" routerLinkActive="active">
+        Управление пользователями
+      </a>
+    }
   </nav>
 
 </div>

@@ -7,11 +7,10 @@ import { LoginResponse } from '../auth.model';
 import { LocalStorageService } from '../../../shared/services/local-storage.service';
 import { CustomMessageService } from '../../../shared/services/custom-message.service';
 import { UserService } from '../../../shared/services/user.service';
-import { NgOptimizedImage } from '@angular/common';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, NgOptimizedImage],
+  imports: [ReactiveFormsModule],
   templateUrl: './login.component.html'
 })
 export class LoginComponent {
@@ -57,5 +56,9 @@ export class LoginComponent {
         this.messageService.showSuccessMessage('Вы вошли в систему!');
         this.router.navigate(['main/']);
       });
+  }
+
+  goToRegister() {
+    this.router.navigate(['/auth/register']);
   }
 }

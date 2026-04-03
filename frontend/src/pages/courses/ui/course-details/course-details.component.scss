@@ -221,3 +221,59 @@
     cursor: pointer;
     margin-top: 16px;
   }
+
+  /* Certificate Banner */
+  .certificate-section {
+    margin-top: 40px;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1px solid #fde68a;
+    border-radius: 12px;
+    padding: 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    box-shadow: 0 4px 6px -1px rgba(251, 191, 36, 0.1), 0 2px 4px -1px rgba(251, 191, 36, 0.06);
+    transition: transform 0.2s;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+  
+    .cert-icon {
+      width: 64px;
+      height: 64px;
+      background-color: #f59e0b;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: white;
+      box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+    }
+  
+    .cert-content {
+      h3 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #92400e;
+        margin: 0 0 8px 0;
+      }
+  
+      p {
+        margin: 0;
+        font-size: 15px;
+        color: #b45309;
+        line-height: 1.6;
+      }
+    }
+  
+    @media (max-width: 600px) {
+      flex-direction: column;
+      text-align: center;
+      
+      .cert-icon {
+        margin: 0 auto;
+      }
+    }
+  }

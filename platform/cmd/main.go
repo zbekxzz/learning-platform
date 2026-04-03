@@ -15,6 +15,7 @@ import (
 	"platform/internal/middleware"
 	"platform/internal/modules"
 	"platform/internal/tests"
+	"platform/internal/users"
 )
 
 func main() {
@@ -40,6 +41,7 @@ func main() {
 	enrollments.RegisterRoutes(protected)
 	modules.RegisterRoutes(protected)
 	tests.RegisterRoutes(protected)
+	users.RegisterRoutes(protected)
 
 	port := os.Getenv("PORT")
 	if port == "" {
