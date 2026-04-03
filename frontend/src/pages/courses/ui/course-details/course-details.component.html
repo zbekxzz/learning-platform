@@ -14,7 +14,28 @@
       <!-- Course Header -->
       <div class="course-header">
         <a routerLink="/main/courses" class="back-link">← Назад к списку</a>
-        <h1>{{ c.title }}</h1>
+        
+        <div class="header-main-content">
+          <div>
+            <h1>{{ c.title }}</h1>
+            <div class="enroll-action">
+              @if (enrollSuccess()) {
+                <span class="enroll-success-msg">✓ Вы записаны на курс</span>
+              } @else {
+                <button 
+                  class="btn-enroll" 
+                  (click)="enrollInCourse()" 
+                  [disabled]="isEnrolling()">
+                  {{ isEnrolling() ? 'Оформление записи...' : 'Записаться на курс' }}
+                </button>
+              }
+              @if (enrollError()) {
+                <p class="enroll-error-msg">{{ enrollError() }}</p>
+              }
+            </div>
+          </div>
+        </div>
+
         <p class="description">{{ c.description }}</p>
         <div class="meta-info">
           <span>Создан: {{ c.created_at | date:'dd.MM.yyyy' }}</span>
