@@ -20,7 +20,8 @@
             <h1>{{ c.title }}</h1>
             <div class="enroll-action">
               @if (enrollSuccess()) {
-                <span class="enroll-success-msg">✓ Вы записаны на курс</span>
+                <span class="enroll-success-msg" style="margin-right: 16px;">✓ Вы записаны на курс</span>
+                <a [routerLink]="['/main/courses/course', c.id, 'learn']" class="btn-enroll" style="text-decoration: none;">Перейти к прохождению</a>
               } @else {
                 <button 
                   class="btn-enroll" 
@@ -44,26 +45,52 @@
 
       <!-- Modules Section -->
       <div class="modules-section">
-        <h2>Модули курса</h2>
+        <h2>Программа курса</h2>
         
-        @if (modules().length === 0) {
+        @if (structure().length === 0) {
           <div class="empty-modules">
             <p>В этом курсе пока нет модулей.</p>
           </div>
         } @else {
-          <div class="modules-list">
-            @for (mod of modules(); track mod.id) {
-              <div class="module-item">
-                <div class="module-index">{{ mod.order_index }}</div>
-                <div class="module-content">
-                  <h3>{{ mod.title }}</h3>
-                  <p class="module-date">Добавлен: {{ mod.created_at | date:'dd.MM.yyyy' }}</p>
+          <div class="structure-list">
+            @for (item of structure(); track item.chapter.id) {
+              <div class="chapter-block" [class.is-expanded]="expandedChapters().has(item.chapter.id)">
+                <div class="chapter-header" (click)="toggleChapter(item.chapter.id)">
+                  <div class="chapter-header-main">
+                    <span class="chapter-index">Глава {{ item.chapter.order_index }}</span>
+                    <h3 class="chapter-title">{{ item.chapter.title }}</h3>
+                  </div>
+                  <div class="chapter-header-chevron">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                         [style.transform]="expandedChapters().has(item.chapter.id) ? 'rotate(180deg)' : 'rotate(0deg)'"
+                         style="transition: transform 0.2s;">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
                 </div>
-                <button class="btn-secondary">Открыть модуль</button>
+
+                @if (expandedChapters().has(item.chapter.id)) {
+                  <div class="chapter-content">
+                    @if (item.modules && item.modules.length > 0) {
+                      <div class="modules-list">
+                        @for (mod of item.modules; track mod.id) {
+                          <div class="module-item" [routerLink]="['/main/courses', c.id, 'learn', mod.id]" style="cursor: pointer;">
+                            <div class="module-index">{{ mod.order_index }}</div>
+                            <div class="module-content">
+                              <h3>{{ mod.title }}</h3>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <div class="empty-modules-text">В этой главе пока нет тем.</div>
+                    }
+                  </div>
+                }
               </div>
             }
           </div>
-        }
+        } 
       </div>
 
       <!-- Certificate Section -->

@@ -2,7 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CoursesService } from '../../services/courses.service';
-import { Course, CourseModule } from '../../models/course.model';
+import { Course, CourseStructureItem } from '../../models/course.model';
 import { forkJoin } from 'rxjs';
 import { ProfileService } from '../../../profile/services/profile.service';
 
@@ -14,7 +14,8 @@ import { ProfileService } from '../../../profile/services/profile.service';
 })
 export class CourseDetailsComponent implements OnInit {
   course = signal<Course | null>(null);
-  modules = signal<CourseModule[]>([]);
+  structure = signal<CourseStructureItem[]>([]);
+  expandedChapters = signal<Set<number>>(new Set<number>());
   isLoading = signal<boolean>(true);
   error = signal<string | null>(null);
 
@@ -43,12 +44,12 @@ export class CourseDetailsComponent implements OnInit {
 
     forkJoin({
       course: this.coursesService.getCourse(id),
-      modules: this.coursesService.getCourseModules(id),
+      structure: this.coursesService.getCourseStructure(id),
       myCourses: this.profileService.getMyCourses()
     }).subscribe({
       next: (res) => {
         this.course.set(res.course);
-        this.modules.set(res.modules || []);
+        this.structure.set(res.structure || []);
         
         // Проверяем, записан ли уже пользователь на этот курс
         const alreadyEnrolled = (res.myCourses || []).some((c: Course) => c.id === id);
@@ -82,5 +83,15 @@ export class CourseDetailsComponent implements OnInit {
         this.isEnrolling.set(false);
       }
     });
+  }
+
+  toggleChapter(chapterId: number) {
+    const current = new Set(this.expandedChapters());
+    if (current.has(chapterId)) {
+      current.delete(chapterId);
+    } else {
+      current.add(chapterId);
+    }
+    this.expandedChapters.set(current);
   }
 }

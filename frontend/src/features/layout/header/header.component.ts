@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from '../../../shared/services/local-storage.service';
 import { ProfileService } from '../../../pages/profile/services/profile.service';
+import { LayoutService } from '../../../shared/services/layout.service';
 
 @Component({
   selector: 'app-header',
@@ -15,7 +16,8 @@ export class HeaderComponent implements OnInit {
   constructor(
     private router: Router,
     private storage: LocalStorageService,
-    private profileService: ProfileService
+    private profileService: ProfileService,
+    public layout: LayoutService
   ) {}
 
   ngOnInit() {

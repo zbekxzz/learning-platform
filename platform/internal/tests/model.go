@@ -5,6 +5,9 @@ import "time"
 type Test struct {
 	ID          int64     `json:"id"`
 	ModuleID    int64     `json:"module_id"`
+	ChapterID   *int64    `json:"chapter_id"`
+	CourseID    *int64    `json:"course_id"`
+	Type        string    `json:"type"` // module | chapter | final
 	Title       string    `json:"title"`
 	TimeLimit   int       `json:"time_limit"`
 	MaxAttempts int       `json:"max_attempts"`
@@ -12,10 +15,15 @@ type Test struct {
 }
 
 type Question struct {
-	ID           int64  `json:"id"`
-	TestID       int64  `json:"test_id"`
-	QuestionText string `json:"question_text"`
-	OrderIndex   int    `json:"order_index"`
+	ID           int64   `json:"id"`
+	TestID       int64   `json:"test_id"`
+	Type         string  `json:"type"` // mcq | open | matching
+	QuestionText string  `json:"question_text"`
+	OrderIndex   int     `json:"order_index"`
+	CorrectText  *string `json:"correct_text,omitempty"`
+
+	Pairs   []map[string]string `json:"pairs,omitempty"`
+	Options []string            `json:"options,omitempty"`
 }
 
 type Answer struct {

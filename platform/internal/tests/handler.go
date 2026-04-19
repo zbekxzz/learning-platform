@@ -10,7 +10,10 @@ func RegisterRoutes(rg *gin.RouterGroup) {
 	group := rg.Group("/tests")
 
 	group.GET("/module/:module_id/start", startTest)
+	group.GET("/chapter/:chapter_id/start", startChapterTest)
+	group.GET("/course/:course_id/final/start", startFinalTest)
 	group.POST("/submit", submitTest)
+	group.POST("/create-full", createFullTest)
 }
 
 func startTest(c *gin.Context) {
@@ -31,20 +34,88 @@ func startTest(c *gin.Context) {
 	})
 }
 
+func startChapterTest(c *gin.Context) {
+
+	chapterID, _ := strconv.ParseInt(c.Param("chapter_id"), 10, 64)
+	userID := c.GetInt64("user_id")
+
+	test, questions, answers, err := StartChapterTest(userID, chapterID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"test":      test,
+		"questions": questions,
+		"answers":   answers,
+	})
+}
+
+func startFinalTest(c *gin.Context) {
+
+	courseID, _ := strconv.ParseInt(c.Param("course_id"), 10, 64)
+	userID := c.GetInt64("user_id")
+
+	test, questions, answers, err := StartFinalTest(userID, courseID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"test":      test,
+		"questions": questions,
+		"answers":   answers,
+	})
+}
+
 func submitTest(c *gin.Context) {
 
 	var req struct {
-		TestID  int64           `json:"test_id"`
-		Answers map[int64]int64 `json:"answers"`
+		TestID  int64                  `json:"test_id"`
+		Answers map[string]interface{} `json:"answers"`
 	}
 
-	c.BindJSON(&req)
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "invalid request"})
+		return
+	}
 
 	userID := c.GetInt64("user_id")
 
-	score, _ := SubmitTest(req.Answers, req.TestID, userID)
+	score, err := SubmitTest(req.Answers, req.TestID, userID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
 
 	c.JSON(200, gin.H{
 		"score": score,
 	})
+}
+
+func createFullTest(c *gin.Context) {
+
+	var req CreateTestRequest
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "invalid request"})
+		return
+	}
+
+	role := c.GetString("role")
+
+	if role != "admin" && role != "teacher" {
+		c.JSON(403, gin.H{"error": "forbidden"})
+		return
+	}
+
+	err := CreateFullTest(req)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "test created"})
 }

@@ -10,12 +10,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
+	"platform/internal/chapters"
 	"platform/internal/courses"
 	"platform/internal/enrollments"
 	"platform/internal/middleware"
 	"platform/internal/modules"
 	"platform/internal/tests"
 	"platform/internal/users"
+
+	"platform/internal/storage"
 )
 
 func main() {
@@ -26,6 +29,7 @@ func main() {
 	}
 
 	database.Connect()
+	storage.InitMinIO()
 
 	r := gin.Default()
 	r.RedirectTrailingSlash = false
@@ -37,6 +41,7 @@ func main() {
 	protected := api.Group("/")
 	protected.Use(middleware.JWT())
 
+	chapters.RegisterRoutes(protected)
 	courses.RegisterProtectedRoutes(protected)
 	enrollments.RegisterRoutes(protected)
 	modules.RegisterRoutes(protected)

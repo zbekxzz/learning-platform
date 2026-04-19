@@ -25,8 +25,8 @@ func GetAll() ([]Course, error) {
 	query := `
 	SELECT id, title, description, created_by, is_published, created_at
 	FROM courses
-	ORDER BY created_at DESC
-	WHERE deleted_at IS NULL`
+	WHERE deleted_at IS NULL
+	ORDER BY created_at DESC`
 
 	rows, err := database.DB.Query(context.Background(), query)
 	if err != nil {

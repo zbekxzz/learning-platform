@@ -7,43 +7,36 @@ import (
 
 func CreateModule(m *Module) error {
 	query := `
-	INSERT INTO modules (course_id, title, order_index)
+	INSERT INTO modules (chapter_id, title, order_index)
 	VALUES ($1, $2, $3)
 	RETURNING id, created_at`
 
 	return database.DB.QueryRow(context.Background(),
 		query,
-		m.CourseID,
+		m.ChapterID,
 		m.Title,
 		m.OrderIndex,
 	).Scan(&m.ID, &m.CreatedAt)
 }
 
-func GetModulesByCourse(courseID int64) ([]Module, error) {
-
-	rows, err := database.DB.Query(context.Background(),
-		`SELECT id, course_id, title, order_index, created_at
+func GetModulesByChapter(chapterID int64) ([]Module, error) {
+	rows, _ := database.DB.Query(context.Background(),
+		`SELECT id, chapter_id, title, order_index
 		 FROM modules
-		 WHERE course_id = $1
-		 ORDER BY order_index ASC`, courseID)
+		 WHERE chapter_id=$1
+		 ORDER BY order_index`, chapterID)
 
-	if err != nil {
-		return nil, err
-	}
 	defer rows.Close()
 
-	modules := make([]Module, 0)
+	var result []Module
 
 	for rows.Next() {
 		var m Module
-		err := rows.Scan(&m.ID, &m.CourseID, &m.Title, &m.OrderIndex, &m.CreatedAt)
-		if err != nil {
-			return nil, err
-		}
-		modules = append(modules, m)
+		rows.Scan(&m.ID, &m.ChapterID, &m.Title, &m.OrderIndex)
+		result = append(result, m)
 	}
 
-	return modules, nil
+	return result, nil
 }
 
 func CreateMaterial(mat *Material) error {

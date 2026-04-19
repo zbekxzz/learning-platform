@@ -1,0 +1,254 @@
+<div class="learning-fullscreen-wrapper">
+  @if (isLoading()) {
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Загрузка учебных материалов...</p>
+  </div>
+  } @else {
+  <!-- LEFT SIDEBAR -->
+  <div class="learning-sidebar">
+    <div class="sidebar-header">
+      <a routerLink="/main/courses/course/{{courseId()}}" class="back-link">← Вернуться к курсу</a>
+      <h2 class="course-title">{{ course()?.title }}</h2>
+
+      <div class="progress-container">
+        <div class="progress-info">
+          <span>Прогресс</span>
+          <span>{{ courseProgress() }}%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" [style.width.%]="courseProgress()"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-content">
+      <div class="structure-accordion">
+        @for (item of structure(); track item.chapter.id) {
+        <div class="chapter-block" [class.is-expanded]="expandedChapters().has(item.chapter.id)">
+
+          <div class="chapter-header" (click)="toggleChapterAccordion(item.chapter.id)">
+            <div class="ch-text">
+              <span class="ch-index">Раздел {{ item.chapter.order_index }}</span>
+              <span class="ch-title">{{ item.chapter.title }}</span>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"
+              [style.transform]="expandedChapters().has(item.chapter.id) ? 'rotate(180deg)' : 'rotate(0deg)'"
+              style="transition: transform 0.2s; color: #9ca3af;">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+
+          @if (expandedChapters().has(item.chapter.id) && item.modules?.length) {
+          <div class="modules-list">
+            @for (mod of item.modules; track mod.id) {
+            <div class="module-item" [class.active]="mod.id === moduleId()"
+              [class.locked]="moduleStatuses()[mod.id] === 'locked'"
+              [class.completed]="moduleStatuses()[mod.id] === 'completed'" (click)="navigateToModule(mod.id)">
+
+              <div class="mod-icon">
+                @if (mod.id === moduleId()) {
+                <span class="icon-active">▶</span>
+                } @else if (moduleStatuses()[mod.id] === 'completed') {
+                <span class="icon-completed">✓</span>
+                } @else if (moduleStatuses()[mod.id] === 'locked') {
+                <span class="icon-locked">🔒</span>
+                } @else {
+                <span class="icon-available">○</span>
+                }
+              </div>
+
+              <div class="mod-info">
+                <span class="mod-index">{{ mod.order_index }}.</span>
+                <span class="mod-title">{{ mod.title }}</span>
+              </div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT AREA -->
+  <div class="learning-main">
+    <div class="main-scroll-area">
+
+      <div class="content-header">
+        <span class="ch-name">{{ currentChapterTitle() }}</span>
+        <h1 class="mod-name">{{ currentModuleTitle() }}</h1>
+      </div>
+
+      <div class="material-blocks">
+        @for (block of materials(); track block.id) {
+
+        @if (block.type === 'text') {
+          <div class="block-text" [innerHTML]="block.content"></div>
+        }
+
+        @if (block.type === 'video') {
+          <div class="block-video">
+            <iframe [src]="safeUrl(block.content)" frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen></iframe>
+          </div>
+        }
+
+        @if (block.type === 'pdf' && block.file_url) {
+          <div class="block-pdf">
+            <iframe [src]="safeUrl(block.file_url)" width="100%" height="800px"></iframe>
+          </div>
+        }
+
+        @if ((block.type === 'image' || block.type === 'gif') && block.file_url) {
+          <div class="block-image">
+            <img [src]="block.file_url" [alt]="block.title" />
+          </div>
+        }
+
+        @if (block.type === 'pptx' && block.file_url) {
+          <div class="block-pptx">
+            <div class="pptx-icon">📊</div>
+            <div class="pptx-info">
+              <h4>{{ block.title }}</h4>
+              <p>Презентация для скачивания</p>
+            </div>
+            <a [href]="block.file_url" target="_blank" class="btn-download">
+              Скачать
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </a>
+          </div>
+        }
+
+        @if (block.type === 'lab') {
+          <div class="block-lab">
+            <div class="lab-header">
+              <span class="icon">🧪</span>
+              <span>Практическое задание</span>
+            </div>
+            <div class="lab-content" [innerHTML]="block.content"></div>
+          </div>
+        }
+
+        @if (block.type === 'interactive') {
+          <div class="block-interactive">
+            <div class="tabs-header">
+              @for (tab of block.content; track $index) {
+              <button class="tab-btn" [class.active]="(activeTabIndexes()[block.id] || 0) === $index"
+                (click)="setActiveTab(block.id, $index)">
+                {{ tab.title }}
+              </button>
+              }
+            </div>
+            <div class="tab-body">
+              {{ block.content[activeTabIndexes()[block.id] || 0].body }}
+            </div>
+          </div>
+        }
+        }
+      </div>
+
+      <!-- QUIZ BLOCK -->
+      @if (testData()) {
+        <div class="quiz-block">
+          <h3>Проверка знаний</h3>
+          
+          <div class="questions-list">
+            @for (q of testQuestions(); track q.id) {
+              <div class="question-item">
+                <p class="quiz-question">{{ (q.id) + '. ' + q.question_text }}</p>
+
+                <!-- TYPE: MCQ -->
+                @if (q.type === 'mcq') {
+                  <div class="quiz-options">
+                    @for (a of testAnswers()[q.id]; track a.id) {
+                      <label class="quiz-option" 
+                             [class.selected]="userAnswers()[q.id] === a.id"
+                             [class.disabled]="quizSubmitted()">
+                        <input type="radio" 
+                               [name]="'q' + q.id" 
+                               [disabled]="quizSubmitted()"
+                               (change)="setUserAnswer(q.id, a.id)"
+                               [checked]="userAnswers()[q.id] === a.id">
+                        <span class="opt-text">{{ a.text }}</span>
+                      </label>
+                    }
+                  </div>
+                }
+
+                <!-- TYPE: OPEN -->
+                @if (q.type === 'open') {
+                  <div class="quiz-open">
+                    <textarea placeholder="Введите ваш ответ..."
+                              [disabled]="quizSubmitted()"
+                              [value]="userAnswers()[q.id] || ''"
+                              (input)="setUserAnswer(q.id, $any($event.target).value)"></textarea>
+                  </div>
+                }
+
+                <!-- TYPE: MATCHING -->
+                @if (q.type === 'matching' && q.pairs && q.options) {
+                  <div class="quiz-matching">
+                    @for (pair of q.pairs; track pair.left) {
+                      <div class="match-pair">
+                        <span class="match-left">{{ pair.left }}</span>
+                        <span class="match-separator">→</span>
+                        <select [disabled]="quizSubmitted()"
+                                (change)="onMatchChange(q.id, pair.left, $event)">
+                          <option value="">-- Выберите --</option>
+                          @for (opt of q.options; track opt) {
+                            <option [value]="opt" [selected]="userAnswers()[q.id]?.[pair.left] === opt">
+                              {{ opt }}
+                            </option>
+                          }
+                        </select>
+                      </div>
+                    }
+                  </div>
+                }
+
+              </div>
+            }
+          </div>
+
+          <!-- Validation/Errors -->
+          @if (quizError()) {
+            <p class="quiz-error">{{ quizError() }}</p>
+          }
+
+          <!-- Submission Area -->
+          @if (!quizSubmitted()) {
+            <button class="btn-submit" (click)="submitTest()" [disabled]="isSubmitDisabled()">Отправить ответы</button>
+          } @else {
+            <div class="quiz-success">
+              <span class="success-icon">🏆</span> 
+              <span>Отлично! Ваш результат: <strong>{{ quizScore() }}</strong>. Урок успешно пройден.</span>
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+
+    <!-- BOTTOM NAVIGATION FOOTER -->
+    <div class="nav-footer">
+      <button class="btn-nav prev" [disabled]="!prevModuleId()"
+        (click)="prevModuleId() && navigateToModule(prevModuleId()!)">
+        ← Предыдущий урок
+      </button>
+
+      <button class="btn-nav next" [disabled]="!nextModuleId() || moduleStatuses()[nextModuleId()!] === 'locked'"
+        (click)="nextModuleId() && navigateToModule(nextModuleId()!)">
+        Следующий урок →
+      </button>
+    </div>
+  </div>
+  }
+</div>

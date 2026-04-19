@@ -1,0 +1,1284 @@
+openapi: 3.0.3
+info:
+  title: Learning Platform API
+  description: |
+    REST API for the Information Security Learning Platform.  
+    Provides authentication, user management, course management, enrollment,
+    course-content hierarchy (chapters → sections → modules → materials),
+    and test/quiz functionality.
+  version: 1.0.0
+  contact:
+    name: Platform Team
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+# ─── Security Schemes ────────────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from `POST /auth/login`.  
+        Pass as `Authorization: Bearer <token>`.
+
+  # ─── Reusable Schemas ───────────────────────────────────────────────
+  schemas:
+    # ── Auth ──
+    RegisterRequest:
+      type: object
+      required: [full_name, email, password]
+      properties:
+        full_name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        password:
+          type: string
+          format: password
+          example: "securePassword123"
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        password:
+          type: string
+          format: password
+          example: "securePassword123"
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT access token (expires in 24 h)
+          example: "eyJhbGciOiJIUzI1NiIs..."
+
+    ProfileResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        full_name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          example: "john@example.com"
+        role:
+          type: string
+          enum: [student, teacher, admin]
+          example: "student"
+
+    # ── Users (admin) ──
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        email:
+          type: string
+          example: "user@example.com"
+        full_name:
+          type: string
+          example: "Jane Smith"
+        role:
+          type: string
+          enum: [student, teacher, admin]
+          example: "student"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-04-01T12:00:00Z"
+
+    CreateUserRequest:
+      type: object
+      required: [email, full_name, password, role]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "newuser@example.com"
+        full_name:
+          type: string
+          example: "New User"
+        password:
+          type: string
+          format: password
+          example: "password123"
+        role:
+          type: string
+          enum: [student, teacher, admin]
+          example: "student"
+
+    UpdateUserRequest:
+      type: object
+      required: [email, full_name, role]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "updated@example.com"
+        full_name:
+          type: string
+          example: "Updated Name"
+        role:
+          type: string
+          enum: [student, teacher, admin]
+          example: "teacher"
+
+    # ── Courses ──
+    Course:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Introduction to Cybersecurity"
+        description:
+          type: string
+          example: "Learn the fundamentals of information security."
+        created_by:
+          type: integer
+          format: int64
+          example: 2
+        is_published:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-04-01T12:00:00Z"
+
+    CreateCourseRequest:
+      type: object
+      required: [title, description]
+      properties:
+        title:
+          type: string
+          example: "Network Security Basics"
+        description:
+          type: string
+          example: "Covers firewalls, VPNs, and IDS."
+
+    PaginatedCourses:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Course"
+        total:
+          type: integer
+          example: 42
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+
+    # ── Chapters ──
+    Chapter:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        course_id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Chapter 1: Threats"
+        order_index:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+
+    CreateChapterRequest:
+      type: object
+      required: [course_id, title, order_index]
+      properties:
+        course_id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Chapter 1: Threats"
+        order_index:
+          type: integer
+          example: 1
+
+    # ── Sections ──
+    Section:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        chapter_id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Section 1.1: Malware"
+        order_index:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+
+    CreateSectionRequest:
+      type: object
+      required: [chapter_id, title, order_index]
+      properties:
+        chapter_id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Section 1.1: Malware"
+        order_index:
+          type: integer
+          example: 1
+
+    # ── Modules ──
+    Module:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        section_id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Module: Ransomware Overview"
+        order_index:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+
+    CreateModuleRequest:
+      type: object
+      required: [section_id, title, order_index]
+      properties:
+        section_id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Module: Ransomware Overview"
+        order_index:
+          type: integer
+          example: 1
+
+    Material:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        module_id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Lecture Slides"
+        type:
+          type: string
+          description: "Type of material (e.g. video, pdf, text, link)"
+          example: "pdf"
+        file_url:
+          type: string
+          nullable: true
+          example: "https://storage.example.com/slides.pdf"
+        external_url:
+          type: string
+          nullable: true
+          example: "https://youtube.com/watch?v=abc"
+        content:
+          type: string
+          nullable: true
+          example: "Inline text content here..."
+        order_index:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+
+    CreateMaterialRequest:
+      type: object
+      required: [module_id, title, type, order_index]
+      properties:
+        module_id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Lecture Slides"
+        type:
+          type: string
+          example: "pdf"
+        file_url:
+          type: string
+          nullable: true
+          example: "https://storage.example.com/slides.pdf"
+        external_url:
+          type: string
+          nullable: true
+          example: null
+        content:
+          type: string
+          nullable: true
+          example: null
+        order_index:
+          type: integer
+          example: 1
+
+    # ── Enrollments ──
+    Enrollment:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        course_id:
+          type: integer
+          format: int64
+        enrolled_at:
+          type: string
+          format: date-time
+
+    # ── Tests & Quizzes ──
+    Test:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        module_id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Quiz: Malware Basics"
+        time_limit:
+          type: integer
+          description: Time limit in seconds
+          example: 600
+        max_attempts:
+          type: integer
+          example: 3
+        created_at:
+          type: string
+          format: date-time
+
+    Question:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        test_id:
+          type: integer
+          format: int64
+          example: 1
+        question_text:
+          type: string
+          example: "What is a trojan horse?"
+        order_index:
+          type: integer
+          example: 1
+
+    Answer:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        question_id:
+          type: integer
+          format: int64
+          example: 1
+        text:
+          type: string
+          example: "A type of malware disguised as legitimate software"
+      description: |
+        The `is_correct` field is never exposed to the client.
+
+    StartTestResponse:
+      type: object
+      properties:
+        test:
+          $ref: "#/components/schemas/Test"
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Question"
+        answers:
+          type: object
+          description: "Map of question_id → list of answers"
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/components/schemas/Answer"
+
+    SubmitTestRequest:
+      type: object
+      required: [test_id, answers]
+      properties:
+        test_id:
+          type: integer
+          format: int64
+          example: 1
+        answers:
+          type: object
+          description: "Map of question_id → selected answer_id"
+          additionalProperties:
+            type: integer
+            format: int64
+          example:
+            "1": 3
+            "2": 7
+
+    SubmitTestResponse:
+      type: object
+      properties:
+        score:
+          type: integer
+          description: Number of correct answers
+          example: 8
+
+    # ── Course Structure ──
+    CourseStructure:
+      type: array
+      items:
+        type: object
+        properties:
+          chapter:
+            $ref: "#/components/schemas/Chapter"
+          sections:
+            type: array
+            items:
+              type: object
+              properties:
+                section:
+                  $ref: "#/components/schemas/Section"
+                modules:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Module"
+
+    # ── Common ──
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "success"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "error description"
+
+# ─── Tags ─────────────────────────────────────────────────────────────
+tags:
+  - name: Auth
+    description: Registration, login, and profile
+  - name: Users
+    description: Admin-only user management (CRUD)
+  - name: Courses
+    description: Course listing and management
+  - name: Chapters
+    description: Chapter management within courses
+  - name: Sections
+    description: Section management within chapters
+  - name: Modules
+    description: Module and material management within sections
+  - name: Enrollments
+    description: Student course enrollment
+  - name: Tests
+    description: Quizzes and test attempts
+
+# ═══════════════════════════════════════════════════════════════════════
+#  PATHS
+# ═══════════════════════════════════════════════════════════════════════
+paths:
+
+  # ─── Auth ────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      description: Creates a new user account with the **student** role.
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "200":
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: "registered"
+        "400":
+          description: Invalid request or duplicate email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      description: Authenticates a user and returns a JWT token valid for 24 hours.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /user/profile:
+    get:
+      tags: [Auth]
+      summary: Get current user profile
+      description: Returns the authenticated user's profile information.
+      operationId: getProfile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Users (Admin) ──────────────────────────────────────────────────
+  /users/:
+    get:
+      tags: [Users]
+      summary: List all users
+      description: Returns all users. **Admin only.**
+      operationId: getUsers
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "403":
+          description: Forbidden — not an admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags: [Users]
+      summary: Create a new user
+      description: Creates a user with a specified role. **Admin only.**
+      operationId: createUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "200":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "403":
+          description: Forbidden — not an admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/{id}:
+    put:
+      tags: [Users]
+      summary: Update a user
+      description: Updates user email, name, and role. **Admin only.**
+      operationId: updateUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: "updated"
+        "403":
+          description: Forbidden — not an admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags: [Users]
+      summary: Delete a user
+      description: Permanently deletes a user. **Admin only.**
+      operationId: deleteUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: User ID
+      responses:
+        "200":
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: "deleted"
+        "403":
+          description: Forbidden — not an admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Courses (Public) ───────────────────────────────────────────────
+  /courses:
+    get:
+      tags: [Courses]
+      summary: List published courses (paginated)
+      description: Returns published courses with pagination. No authentication required.
+      operationId: getPublicCourses
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Items per page
+      responses:
+        "200":
+          description: Paginated list of published courses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedCourses"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /courses/{id}:
+    get:
+      tags: [Courses]
+      summary: Get a published course by ID
+      description: Returns a single published course. No authentication required.
+      operationId: getPublicCourseByID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Course ID
+      responses:
+        "200":
+          description: Course details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+        "404":
+          description: Course not found or not published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Courses (Protected) ────────────────────────────────────────────
+  /courses/:
+    post:
+      tags: [Courses]
+      summary: Create a new course
+      description: Creates a new course (unpublished). **Admin or Teacher only.**
+      operationId: createCourse
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCourseRequest"
+      responses:
+        "200":
+          description: Course created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden — not admin/teacher
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /courses/{id}/delete:
+    delete:
+      tags: [Courses]
+      summary: Delete a course (soft delete)
+      description: Soft-deletes a course by setting `deleted_at`. **Admin only.**
+      operationId: deleteCourse
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Course ID
+      responses:
+        "200":
+          description: Course deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: "course deleted"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden — not admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /courses/{id}/publish:
+    put:
+      tags: [Courses]
+      summary: Publish a course
+      description: Marks a course as published. **Admin or Teacher only.**
+      operationId: publishCourse
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Course ID
+      responses:
+        "200":
+          description: Course published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: "published"
+        "403":
+          description: Forbidden — not admin/teacher
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /courses/admin/all:
+    get:
+      tags: [Courses]
+      summary: List all courses (admin)
+      description: Returns all courses including unpublished ones. **Admin only.**
+      operationId: getAllCoursesForAdmin
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of all courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+        "403":
+          description: Forbidden — not admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Course Structure (Public) ──────────────────────────────────────
+  /courses/courses/{course_id}/structure:
+    get:
+      tags: [Courses]
+      summary: Get full course structure
+      description: |
+        Returns the hierarchical structure of a course:  
+        **chapters → sections → modules**.  
+        No authentication required.
+      operationId: getCourseStructure
+      parameters:
+        - name: course_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Course ID
+      responses:
+        "200":
+          description: Course structure tree
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseStructure"
+        "500":
+          description: Failed to get chapters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Enrollments ────────────────────────────────────────────────────
+  /enrollments/{course_id}:
+    post:
+      tags: [Enrollments]
+      summary: Enroll in a course
+      description: Enrolls the authenticated user in a published course. **Student only.**
+      operationId: enroll
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: course_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Course ID
+      responses:
+        "200":
+          description: Enrolled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: "enrolled successfully"
+        "400":
+          description: Invalid course ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Not a student / course not published / already enrolled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags: [Enrollments]
+      summary: Unenroll from a course
+      description: Removes enrollment for the authenticated user. **Student only.**
+      operationId: unenroll
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: course_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Course ID
+      responses:
+        "200":
+          description: Unenrolled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: "unenrolled successfully"
+        "400":
+          description: Invalid course ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Not a student / enrollment not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /enrollments/my:
+    get:
+      tags: [Enrollments]
+      summary: Get my enrolled courses
+      description: Returns all courses the authenticated user is enrolled in.
+      operationId: getMyCourses
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of enrolled courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Modules ────────────────────────────────────────────────────────
+  /modules/:
+    post:
+      tags: [Modules]
+      summary: Create a module
+      description: Creates a new module within a section. **Admin or Teacher only.**
+      operationId: createModule
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateModuleRequest"
+      responses:
+        "200":
+          description: Module created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Module"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden — not admin/teacher
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /modules/course/{section_id}:
+    get:
+      tags: [Modules]
+      summary: Get modules by section
+      description: Returns all modules for a given section, ordered by `order_index`.
+      operationId: getModulesBySection
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: section_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Section ID
+      responses:
+        "200":
+          description: List of modules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Module"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /modules/material:
+    post:
+      tags: [Modules]
+      summary: Create a material
+      description: Creates a new learning material within a module. **Admin or Teacher only.**
+      operationId: createMaterial
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMaterialRequest"
+      responses:
+        "200":
+          description: Material created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden — not admin/teacher
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /modules/{module_id}/materials:
+    get:
+      tags: [Modules]
+      summary: Get materials by module
+      description: Returns all materials for a given module, ordered by `order_index`.
+      operationId: getMaterialsByModule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: module_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Module ID
+      responses:
+        "200":
+          description: List of materials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Material"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── Tests ──────────────────────────────────────────────────────────
+  /tests/module/{module_id}/start:
+    get:
+      tags: [Tests]
+      summary: Start a test
+      description: |
+        Fetches the test for a module, creates an attempt, and returns  
+        questions with answers (correct answers are hidden).
+      operationId: startTest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: module_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Module ID
+      responses:
+        "200":
+          description: Test started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StartTestResponse"
+        "500":
+          description: Failed to start test
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /tests/submit:
+    post:
+      tags: [Tests]
+      summary: Submit test answers
+      description: |
+        Submits the user's answers for a test. Returns the score  
+        (number of correct answers) and updates the attempt record.
+      operationId: submitTest
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitTestRequest"
+      responses:
+        "200":
+          description: Test submitted, score returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitTestResponse"

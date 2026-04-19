@@ -3,6 +3,16 @@
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+
+  app-sidebar {
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &.sidebar-closed {
+    app-sidebar {
+      margin-left: -260px;
+    }
+  }
 }
 
 .layout-content {

@@ -4,14 +4,14 @@ import (
 	"errors"
 )
 
-func CreateModuleService(courseID int64, title string, order int, role string) (*Module, error) {
+func CreateModuleService(chapterID int64, title string, order int, role string) (*Module, error) {
 
 	if role != "admin" && role != "teacher" {
 		return nil, errors.New("forbidden")
 	}
 
 	module := &Module{
-		CourseID:   courseID,
+		ChapterID:  chapterID,
 		Title:      title,
 		OrderIndex: order,
 	}

@@ -9,8 +9,9 @@ import (
 
 func RegisterPublicRoutes(rg *gin.RouterGroup) {
 	group := rg.Group("/courses")
-	group.GET("", getPublicCourses)
+	group.GET("/", getPublicCourses)
 	group.GET("/:id", getPublicCourseByID)
+	group.GET("/:id/structure", GetCourseStructure)
 }
 
 func RegisterProtectedRoutes(rg *gin.RouterGroup) {

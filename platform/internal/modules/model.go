@@ -4,7 +4,7 @@ import "time"
 
 type Module struct {
 	ID         int64     `json:"id"`
-	CourseID   int64     `json:"course_id"`
+	ChapterID  int64     `json:"chapter_id"`
 	Title      string    `json:"title"`
 	OrderIndex int       `json:"order_index"`
 	CreatedAt  time.Time `json:"created_at"`
