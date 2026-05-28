@@ -1,0 +1,102 @@
+<div class="module-editor-layout">
+  <!-- Left Panel: Materials List -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a [routerLink]="['/main/teacher/courses', courseId, 'edit']" class="back-link">← Қайту</a>
+      <h2>Материалдар</h2>
+      <button class="btn-primary btn-full" (click)="openMaterialModal()">+ Материал қосу</button>
+    </div>
+
+    @if (isLoading()) {
+      <div class="loading-state">
+        <span class="spinner"></span>
+      </div>
+    } @else {
+      <div 
+        class="materials-list" 
+        cdkDropList 
+        (cdkDropListDropped)="drop($event)">
+        
+        @for (mat of materials(); track mat.id) {
+          <div 
+            class="material-item" 
+            cdkDrag 
+            [class.active]="activeMaterial()?.id === mat.id"
+            (click)="selectMaterial(mat)">
+            
+            <div class="drag-handle" cdkDragHandle>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            
+            <div class="material-info">
+              <span class="icon">📄</span>
+              <span class="title">{{ mat.title }}</span>
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-state">
+            <p>Әзірге материалдар жоқ</p>
+          </div>
+        }
+      </div>
+    }
+  </aside>
+
+  <!-- Right Panel: Editor Area -->
+  <main class="content-area">
+    @if (activeMaterial()) {
+      <div class="editor-header">
+        <h1>{{ activeMaterial()?.title }}</h1>
+        <span class="badge">{{ activeMaterial()?.type }}</span>
+      </div>
+      
+      <div class="editor-body">
+        <!-- In the future, this will be an actual rich text editor form. -->
+        <!-- For now, we just display the text content or a placeholder. -->
+        <div class="content-preview">
+          @if (activeMaterial()?.content) {
+            <p class="text-content">{{ activeMaterial()?.content }}</p>
+          } @else {
+            <p class="placeholder">Бұл материалда мәтін жоқ.</p>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="empty-selection">
+        <div class="icon">👈</div>
+        <p>Көру немесе өңдеу үшін сол жақтан материалды таңдаңыз</p>
+      </div>
+    }
+  </main>
+</div>
+
+<!-- Add Material Modal -->
+@if (isMaterialModalOpen()) {
+  <div class="modal-backdrop" (click)="closeMaterialModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Жаңа материал қосу</h2>
+        <button class="close-btn" (click)="closeMaterialModal()">&times;</button>
+      </div>
+
+      <form [formGroup]="materialForm" (ngSubmit)="saveMaterial()">
+        <div class="form-group">
+          <label>Материал атауы</label>
+          <input type="text" formControlName="title" placeholder="Тақырыпты енгізіңіз">
+        </div>
+
+        <div class="form-group">
+          <label>Мәтін (қалауыңызша)</label>
+          <textarea formControlName="content" rows="6" placeholder="Материал мәтінін осында жазыңыз"></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeMaterialModal()">Болдырмау</button>
+          <button type="submit" class="btn-primary" [disabled]="isSaving()">Сақтау</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

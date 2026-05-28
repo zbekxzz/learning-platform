@@ -11,3 +11,13 @@ type Course struct {
 	CreatedAt   time.Time  `json:"created_at"`
 	DeletedAt   *time.Time `json:"-"`
 }
+
+type CourseWithAuthor struct {
+	ID          int64     `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	CreatedBy   int64     `json:"created_by"`
+	AuthorName  string    `json:"author_name"`
+	IsPublished bool      `json:"is_published"`
+	CreatedAt   time.Time `json:"created_at"`
+}

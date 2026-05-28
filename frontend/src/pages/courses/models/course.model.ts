@@ -7,6 +7,16 @@ export interface Course {
   created_at: string;
 }
 
+export interface CourseWithAuthor {
+  id: number;
+  title: string;
+  description: string;
+  created_by: number;
+  author_name: string;
+  is_published: boolean;
+  created_at: string;
+}
+
 export interface CourseModule {
   id: number;
   course_id: number;

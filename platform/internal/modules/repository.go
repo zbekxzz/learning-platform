@@ -95,3 +95,33 @@ func GetMaterialsByModule(moduleID int64) ([]Material, error) {
 
 	return materials, nil
 }
+
+// OrderUpdate represents an incoming update for a material's order index.
+type OrderUpdate struct {
+	ID         int64 `json:"id"`
+	OrderIndex int   `json:"order_index"`
+}
+
+// UpdateMaterialsOrder updates the order_index for a slice of materials within a transaction.
+func UpdateMaterialsOrder(moduleID int64, updates []OrderUpdate) error {
+	tx, err := database.DB.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(context.Background())
+
+	query := `
+		UPDATE materials
+		SET order_index = $1
+		WHERE id = $2 AND module_id = $3
+	`
+
+	for _, u := range updates {
+		_, err := tx.Exec(context.Background(), query, u.OrderIndex, u.ID, moduleID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(context.Background())
+}

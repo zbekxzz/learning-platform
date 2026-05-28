@@ -7,7 +7,7 @@
         </div>
 
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login__form">
-          <h2 class="login__title">Вход</h2>
+          <h2 class="login__title">Кіру</h2>
           
           <div class="input__group">
             <input
@@ -26,16 +26,16 @@
               id="password"
               formControlName="password"
               class="input__field"
-              placeholder="Пароль"
+              placeholder="Құпия сөз"
               autocomplete="off"
               required
             />
           </div>
           
-          <button type="submit" class="input__btn">Войти</button>
+          <button type="submit" class="input__btn">Кіру</button>
 
           <div class="auth-footer">
-            Нет аккаунта? <a (click)="goToRegister()">Зарегистрируйтесь</a>
+            Аккаунтыңыз жоқ па? <a (click)="goToRegister()">Тіркеліңіз</a>
           </div>
         </form>
       </div>

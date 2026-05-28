@@ -148,7 +148,7 @@ export class CourseLearningComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Ошибка загрузки', err);
+        console.error('Жүктеу қатесі', err);
         this.isLoading.set(false);
       }
     });
@@ -174,7 +174,7 @@ export class CourseLearningComponent implements OnInit {
         this.materials.set(materials);
       },
       error: (err) => {
-        console.error('Ошибка загрузки материалов темы', err);
+        console.error('Тақырып материалдарын жүктеу қатесі', err);
         this.materials.set([]);
       }
     });
@@ -198,7 +198,7 @@ export class CourseLearningComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.warn('Тест для данного модуля не найден или недоступен.');
+        console.warn('Бұл модуль үшін тест табылмады немесе қолжетімсіз.');
       }
     });
   }
@@ -318,7 +318,7 @@ export class CourseLearningComponent implements OnInit {
         }
       },
       error: (err) => {
-        this.quizError.set('Ошибка при отправке теста. Проверьте правильность заполнения.');
+        this.quizError.set('Тестті жіберу кезінде қате пайда болды. Толтыру дұрыстығын тексеріңіз.');
         this.quizSubmitted.set(false);
       }
     });

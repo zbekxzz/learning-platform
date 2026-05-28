@@ -1,4 +1,123 @@
-<div class="page-container" style="padding: 24px;">
-  <h2>Управление курсами (Преподаватель)</h2>
-  <p>Здесь преподаватель сможет создавать, редактировать, деактивировать и удалять свои курсы.</p>
+<div class="courses-container">
+  <div class="header">
+    <div class="header-text">
+      <h1>Менің курстарым</h1>
+      <p class="subtitle">Өз курстарыңызды басқарыңыз</p>
+    </div>
+    <div class="header-stats">
+      @if (!isLoading() && !error()) {
+        <div class="stat-card">
+          <span class="stat-value">{{ courses().length }}</span>
+          <span class="stat-label">Барлығы</span>
+        </div>
+        <div class="stat-card published">
+          <span class="stat-value">{{ publishedCount() }}</span>
+          <span class="stat-label">Жарияланған</span>
+        </div>
+        <div class="stat-card hidden">
+          <span class="stat-value">{{ hiddenCount() }}</span>
+          <span class="stat-label">Жасырын</span>
+        </div>
+      }
+      <button class="btn-primary create-btn" (click)="openCreateForm()">+ Курс жасау</button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="state-container loading">
+      <span class="spinner"></span>
+      <p>Курстар жүктелуде...</p>
+    </div>
+  } @else if (error()) {
+    <div class="state-container error">
+      <div class="error-icon">⚠️</div>
+      <p>{{ error() }}</p>
+      <button class="btn-retry" (click)="loadCourses()">Қайтадан байқап көру</button>
+    </div>
+  } @else {
+    <div class="table-card">
+      <table class="courses-table">
+        <thead>
+          <tr>
+            <th>Курс атауы</th>
+            <th>Күйі</th>
+            <th class="text-right">Әрекеттер</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (course of courses(); track course.id) {
+            <tr>
+              <td>
+                <div class="course-title-cell">
+                  <span class="course-title">{{ course.title }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="course.is_published ? 'published' : 'hidden'">
+                  {{ course.is_published ? 'Жарияланған' : 'Жасырын' }}
+                </span>
+              </td>
+              <td class="actions text-right">
+                <button
+                  class="btn-toggle"
+                  [ngClass]="course.is_published ? 'btn-hide' : 'btn-show'"
+                  [disabled]="togglingId() === course.id"
+                  (click)="togglePublish(course)">
+                  @if (togglingId() === course.id) {
+                    <span class="btn-spinner"></span>
+                  } @else {
+                    {{ course.is_published ? 'Жасыру' : 'Жариялау' }}
+                  }
+                </button>
+                <a [routerLink]="['/main/teacher/courses', course.id, 'edit']" class="btn-edit">
+                  Редакциялау
+                </a>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="empty-text">Сізде әлі курстар жоқ</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 </div>
+
+<!-- Modal Form -->
+@if (isCreateModalOpen()) {
+  <div class="modal-backdrop" (click)="closeCreateForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Жаңа курс жасау</h2>
+        <button class="close-btn" (click)="closeCreateForm()">&times;</button>
+      </div>
+
+      <form [formGroup]="courseForm" (ngSubmit)="createCourse()">
+        <div class="form-group">
+          <label>Курс атауы</label>
+          <input type="text" formControlName="title" placeholder="Курстың атауын енгізіңіз">
+          @if (courseForm.get('title')?.invalid && courseForm.get('title')?.touched) {
+            <span class="error-msg">Курс атауын толтырыңыз</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Курс сипаттамасы</label>
+          <textarea formControlName="description" placeholder="Курс туралы қысқаша мәлімет" rows="4"></textarea>
+          @if (courseForm.get('description')?.invalid && courseForm.get('description')?.touched) {
+            <span class="error-msg">Курс сипаттамасын толтырыңыз</span>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeCreateForm()">Болдырмау</button>
+          <button type="submit" class="btn-primary" [disabled]="isCreating()">
+            {{ isCreating() ? 'Сақталуда...' : 'Жасау' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

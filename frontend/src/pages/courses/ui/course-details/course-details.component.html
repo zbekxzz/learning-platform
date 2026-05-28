@@ -2,32 +2,32 @@
   @if (isLoading()) {
     <div class="state-container loading">
       <span class="spinner"></span>
-      <p>Загрузка курса...</p>
+      <p>Курс жүктелуде...</p>
     </div>
   } @else if (error()) {
     <div class="state-container error">
       <p>{{ error() }}</p>
-      <button class="btn-retry" routerLink="/main/courses">Вернуться к списку</button>
+      <button class="btn-retry" routerLink="/main/courses">Тізімге оралу</button>
     </div>
   } @else {
     @if (course(); as c) {
       <!-- Course Header -->
       <div class="course-header">
-        <a routerLink="/main/courses" class="back-link">← Назад к списку</a>
+        <a routerLink="/main/courses" class="back-link">← Тізімге оралу</a>
         
         <div class="header-main-content">
           <div>
             <h1>{{ c.title }}</h1>
             <div class="enroll-action">
               @if (enrollSuccess()) {
-                <span class="enroll-success-msg" style="margin-right: 16px;">✓ Вы записаны на курс</span>
-                <a [routerLink]="['/main/courses/course', c.id, 'learn']" class="btn-enroll" style="text-decoration: none;">Перейти к прохождению</a>
+                <span class="enroll-success-msg" style="margin-right: 16px;">✓ Сіз курсқа жазылдыңыз</span>
+                <a [routerLink]="['/main/courses/course', c.id, 'learn']" class="btn-enroll" style="text-decoration: none;">Өту</a>
               } @else {
                 <button 
                   class="btn-enroll" 
                   (click)="enrollInCourse()" 
                   [disabled]="isEnrolling()">
-                  {{ isEnrolling() ? 'Оформление записи...' : 'Записаться на курс' }}
+                  {{ isEnrolling() ? 'Жазылу рәсімделуде...' : 'Курсқа жазылу' }}
                 </button>
               }
               @if (enrollError()) {
@@ -39,17 +39,17 @@
 
         <p class="description">{{ c.description }}</p>
         <div class="meta-info">
-          <span>Создан: {{ c.created_at | date:'dd.MM.yyyy' }}</span>
+          <span>Құрылған күні: {{ c.created_at | date:'dd.MM.yyyy' }}</span>
         </div>
       </div>
 
       <!-- Modules Section -->
       <div class="modules-section">
-        <h2>Программа курса</h2>
+        <h2>Курс бағдарламасы</h2>
         
         @if (structure().length === 0) {
           <div class="empty-modules">
-            <p>В этом курсе пока нет модулей.</p>
+            <p>Бұл курста әзірге модульдер жоқ.</p>
           </div>
         } @else {
           <div class="structure-list">
@@ -57,7 +57,7 @@
               <div class="chapter-block" [class.is-expanded]="expandedChapters().has(item.chapter.id)">
                 <div class="chapter-header" (click)="toggleChapter(item.chapter.id)">
                   <div class="chapter-header-main">
-                    <span class="chapter-index">Глава {{ item.chapter.order_index }}</span>
+                    <span class="chapter-index">Тарау {{ item.chapter.order_index }}</span>
                     <h3 class="chapter-title">{{ item.chapter.title }}</h3>
                   </div>
                   <div class="chapter-header-chevron">
@@ -83,7 +83,7 @@
                         }
                       </div>
                     } @else {
-                      <div class="empty-modules-text">В этой главе пока нет тем.</div>
+                      <div class="empty-modules-text">Бұл тарауда әзірге тақырыптар жоқ.</div>
                     }
                   </div>
                 }
@@ -102,8 +102,8 @@
           </svg>
         </div>
         <div class="cert-content">
-          <h3>Сертификат об окончании</h3>
-          <p>После успешного прохождения всех модулей этого курса, вы получите официальный именной сертификат, подтверждающий ваши знания.</p>
+          <h3>Аяқтағаны туралы сертификат</h3>
+          <p>Осы курстың барлық модульдерін сәтті аяқтағаннан кейін сіз біліміңізді растайтын ресми атаулы сертификат аласыз.</p>
         </div>
       </div>
     }

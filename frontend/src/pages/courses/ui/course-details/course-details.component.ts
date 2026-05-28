@@ -58,8 +58,8 @@ export class CourseDetailsComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Ошибка загрузки курса', err);
-        this.error.set('Не удалось загрузить информацию о курсе. Попробуйте обновить страницу.');
+        console.error('Курсты жүктеу қатесі', err);
+        this.error.set('Курс туралы ақпаратты жүктеу мүмкін болмады. Бетті жаңартып көріңіз.');
         this.isLoading.set(false);
       }
     });
@@ -78,8 +78,8 @@ export class CourseDetailsComponent implements OnInit {
         this.isEnrolling.set(false);
       },
       error: (err) => {
-        console.error('Ошибка записи на курс', err);
-        this.enrollError.set('Не удалось записаться на курс. Возможно, вы уже записаны.');
+        console.error('Курсқа жазылу қатесі', err);
+        this.enrollError.set('Курсқа жазылу мүмкін болмады. Бәлкім, сіз бұл курсқа жазылып қойған боларсыз.');
         this.isEnrolling.set(false);
       }
     });

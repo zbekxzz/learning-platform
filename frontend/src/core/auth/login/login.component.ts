@@ -32,7 +32,7 @@ export class LoginComponent {
 
   onSubmit() {
     if (this.loginForm.invalid) {
-      this.messageService.showErrorMessage('Заполните все поля!');
+      this.messageService.showErrorMessage('Барлық өрістерді толтырыңыз!');
       return;
     }
 
@@ -45,7 +45,7 @@ export class LoginComponent {
         first(),
         catchError((err) => {
           this.messageService.showErrorMessage(
-            'Заполненные данные не корректны! Пожалуйста, попробуйте еще раз!'
+            'Енгізілген деректер дұрыс емес! Қайталап көріңіз!'
           );
           return throwError(() => err);
         })
@@ -53,7 +53,7 @@ export class LoginComponent {
       .subscribe((data: LoginResponse) => {
         this.userService.setUserData(data);
         this.localStorageService.setToken(data.token);
-        this.messageService.showSuccessMessage('Вы вошли в систему!');
+        this.messageService.showSuccessMessage('Сіз жүйеге кірдіңіз!');
         this.router.navigate(['main/']);
       });
   }

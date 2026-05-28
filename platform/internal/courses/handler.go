@@ -19,8 +19,9 @@ func RegisterProtectedRoutes(rg *gin.RouterGroup) {
 
 	group.POST("/", create)
 	group.DELETE("/:id", deleteCourse)
-	group.PUT("/:id/publish", publish)
+	group.PUT("/:id/publish", togglePublish)
 	group.GET("/admin/all", getAllForAdmin)
+	group.GET("/teacher/my", getTeacherCourses)
 }
 
 func getPublicCourses(c *gin.Context) {
@@ -54,6 +55,26 @@ func getAllForAdmin(c *gin.Context) {
 	}
 
 	courses, err := GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot fetch"})
+		return
+	}
+
+	c.JSON(http.StatusOK, courses)
+}
+
+func getTeacherCourses(c *gin.Context) {
+
+	role := c.GetString("role")
+
+	if role != "teacher" && role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
+
+	userID := c.GetInt64("user_id")
+
+	courses, err := GetTeacherCourses(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot fetch"})
 		return
@@ -114,20 +135,21 @@ func getByID(c *gin.Context) {
 	c.JSON(http.StatusOK, course)
 }
 
-func publish(c *gin.Context) {
+func togglePublish(c *gin.Context) {
 
 	idParam := c.Param("id")
 	id, _ := strconv.ParseInt(idParam, 10, 64)
 
+	userID := c.GetInt64("user_id")
 	role := c.GetString("role")
 
-	err := PublishCourse(id, role)
+	err := TogglePublishCourse(id, userID, role)
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "published"})
+	c.JSON(http.StatusOK, gin.H{"message": "toggled"})
 }
 
 func deleteCourse(c *gin.Context) {

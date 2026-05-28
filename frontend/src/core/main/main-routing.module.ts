@@ -9,6 +9,11 @@ const routes: Routes = [
     component: MainComponent,
     children: [
       {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'courses/list'
+      },
+      {
         path: 'courses',
         loadChildren: () => import('../../pages/courses/courses.module').then(m => m.CoursesModule)
       },
@@ -21,6 +26,18 @@ const routes: Routes = [
         canActivate: [RoleGuard],
         data: { roles: ['teacher'] },
         loadComponent: () => import('../../pages/teacher/ui/course-management/course-management.component').then(c => c.TeacherCourseManagementComponent)
+      },
+      {
+        path: 'teacher/courses/:id/edit',
+        canActivate: [RoleGuard],
+        data: { roles: ['teacher'] },
+        loadComponent: () => import('../../pages/teacher/ui/course-editor/course-editor.component').then(c => c.CourseEditorComponent)
+      },
+      {
+        path: 'teacher/courses/:id/modules/:moduleId/edit',
+        canActivate: [RoleGuard],
+        data: { roles: ['teacher'] },
+        loadComponent: () => import('../../pages/teacher/ui/module-editor/module-editor.component').then(c => c.ModuleEditorComponent)
       },
       {
         path: 'admin/courses',

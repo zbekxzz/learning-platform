@@ -17,6 +17,7 @@ func RegisterRoutes(rg *gin.RouterGroup) {
 
 	group.POST("/material", createMaterial)
 	group.GET("/:module_id/materials", getMaterials)
+	group.PUT("/:module_id/materials/reorder", reorderMaterials)
 
 	group.POST("/upload", uploadMaterialFile)
 }
@@ -113,4 +114,31 @@ func uploadMaterialFile(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"url": url,
 	})
+}
+
+func reorderMaterials(c *gin.Context) {
+	idParam := c.Param("module_id")
+	moduleID, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid module id"})
+		return
+	}
+
+	var req struct {
+		Updates []OrderUpdate `json:"updates"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+		return
+	}
+
+	role := c.GetString("role")
+	err = UpdateMaterialsOrderService(moduleID, req.Updates, role)
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "order updated"})
 }

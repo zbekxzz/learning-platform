@@ -39,7 +39,7 @@ export class ProfilePageComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error fetching profile:', err);
-        this.error.set('Не удалось загрузить данные профиля.');
+        this.error.set('Профиль деректерін жүктеу мүмкін болмады.');
         this.isLoading.set(false);
       }
     });
@@ -56,7 +56,7 @@ export class ProfilePageComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error fetching my courses:', err);
-        this.coursesError.set('Не удалось загрузить ваши курсы.');
+        this.coursesError.set('Курстарыңызды жүктеу мүмкін болмады.');
         this.isLoadingCourses.set(false);
       }
     });

@@ -21,14 +21,44 @@ func Create(course *Course) error {
 	).Scan(&course.ID, &course.CreatedAt)
 }
 
-func GetAll() ([]Course, error) {
+func GetAll() ([]CourseWithAuthor, error) {
+	query := `
+	SELECT c.id, c.title, c.description, c.created_by,
+	       COALESCE(u.full_name, 'Белгісіз') AS author_name,
+	       c.is_published, c.created_at
+	FROM courses c
+	LEFT JOIN users u ON c.created_by = u.id
+	WHERE c.deleted_at IS NULL
+	ORDER BY c.created_at DESC`
+
+	rows, err := database.DB.Query(context.Background(), query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	courses := make([]CourseWithAuthor, 0)
+
+	for rows.Next() {
+		var c CourseWithAuthor
+		err := rows.Scan(&c.ID, &c.Title, &c.Description, &c.CreatedBy, &c.AuthorName, &c.IsPublished, &c.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		courses = append(courses, c)
+	}
+
+	return courses, nil
+}
+
+func GetByCreator(userID int64) ([]Course, error) {
 	query := `
 	SELECT id, title, description, created_by, is_published, created_at
 	FROM courses
-	WHERE deleted_at IS NULL
+	WHERE created_by = $1 AND deleted_at IS NULL
 	ORDER BY created_at DESC`
 
-	rows, err := database.DB.Query(context.Background(), query)
+	rows, err := database.DB.Query(context.Background(), query, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -106,8 +136,8 @@ func GetByID(id int64) (*Course, error) {
 	return &c, nil
 }
 
-func Publish(id int64) error {
-	query := `UPDATE courses SET is_published = TRUE WHERE id = $1`
+func TogglePublish(id int64) error {
+	query := `UPDATE courses SET is_published = NOT is_published WHERE id = $1 AND deleted_at IS NULL`
 	_, err := database.DB.Exec(context.Background(), query, id)
 	return err
 }

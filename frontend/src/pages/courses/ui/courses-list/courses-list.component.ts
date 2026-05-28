@@ -38,8 +38,8 @@ export class CoursesListComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Ошибка получения курсов:', err);
-        this.error.set('Произошла ошибка при загрузке курсов. Попробуйте еще раз.');
+        console.error('Курстарды алу қатесі:', err);
+        this.error.set('Курстарды жүктеу кезінде қате пайда болды. Қайталап көріңіз.');
         this.isLoading.set(false);
       }
     });

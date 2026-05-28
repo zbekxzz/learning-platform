@@ -17,14 +17,14 @@ export class CustomMessageService {
   }
 
   showErrorMessage(errorMessage: string): void {
-    this.showTranslatedMessage('error', 'Ошибка', errorMessage);
+    this.showTranslatedMessage('error', 'Қате', errorMessage);
   }
 
   showInfoMessage(errorMessage: string): void {
-    this.showTranslatedMessage('info', 'Предупреждение', errorMessage);
+    this.showTranslatedMessage('info', 'Ескерту', errorMessage);
   }
 
   showSuccessMessage(errorMessage: string): void {
-    this.showTranslatedMessage('success', 'Успешно', errorMessage);
+    this.showTranslatedMessage('success', 'Сәтті', errorMessage);
   }
 }

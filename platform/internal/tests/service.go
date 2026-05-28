@@ -10,6 +10,15 @@ import (
 
 func StartTest(userID, moduleID int64) (*Test, []Question, map[int64]interface{}, error) {
 
+	canAccess, err := CanAccessModule(userID, moduleID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	if !canAccess {
+		return nil, nil, nil, fmt.Errorf("module locked")
+	}
+
 	test, err := GetTestByModule(moduleID)
 	if err != nil {
 		return nil, nil, nil, err
@@ -39,7 +48,7 @@ func StartTest(userID, moduleID int64) (*Test, []Question, map[int64]interface{}
 			questions[i].Pairs = pairs
 			questions[i].Options = options
 
-			answerMap[q.ID] = []interface{}{} // можно и nil
+			answerMap[q.ID] = []interface{}{}
 
 		case "open":
 			answerMap[q.ID] = []interface{}{}
@@ -104,6 +113,39 @@ func StartFinalTest(userID, courseID int64) (*Test, []Question, map[int64][]Answ
 }
 
 func SubmitTest(userAnswers map[string]interface{}, testID int64, userID int64) (int, error) {
+	var maxAttempts int
+
+	err := database.DB.QueryRow(context.Background(),
+		`SELECT max_attempts FROM tests WHERE id=$1`,
+		testID,
+	).Scan(&maxAttempts)
+
+	if err != nil {
+		return 0, err
+	}
+
+	totalQuestions, err := GetQuestionCount(testID)
+	if err != nil {
+		return 0, err
+	}
+
+	passed, err := IsTestPassed(userID, testID, totalQuestions)
+	if err != nil {
+		return 0, err
+	}
+
+	if passed {
+		return 0, fmt.Errorf("test already passed")
+	}
+
+	attemptCount, err := GetAttemptCount(userID, testID)
+	if err != nil {
+		return 0, err
+	}
+
+	if attemptCount >= maxAttempts {
+		return 0, fmt.Errorf("no attempts left")
+	}
 
 	score := 0
 
@@ -113,7 +155,6 @@ func SubmitTest(userAnswers map[string]interface{}, testID int64, userID int64) 
 	}
 
 	for _, q := range questions {
-		fmt.Println("QUESTION:", q.ID, "TYPE:", q.Type)
 
 		key := strconv.FormatInt(q.ID, 10)
 
@@ -317,4 +358,122 @@ func CreateFullTest(req CreateTestRequest) error {
 
 func normalize(s string) string {
 	return strings.ToLower(strings.TrimSpace(s))
+}
+
+func GetQuestionCount(testID int64) (int, error) {
+	var count int
+	err := database.DB.QueryRow(context.Background(),
+		`SELECT COUNT(*) FROM questions WHERE test_id=$1`,
+		testID,
+	).Scan(&count)
+	return count, err
+}
+
+func IsTestPassed(userID, testID int64, totalQuestions int) (bool, error) {
+
+	var exists bool
+
+	err := database.DB.QueryRow(context.Background(),
+		`SELECT EXISTS (
+			SELECT 1 FROM attempts
+			WHERE user_id=$1 
+			AND test_id=$2 
+			AND score=$3
+		)`,
+		userID, testID, totalQuestions,
+	).Scan(&exists)
+
+	return exists, err
+}
+
+func GetAttemptCount(userID, testID int64) (int, error) {
+
+	var count int
+
+	err := database.DB.QueryRow(context.Background(),
+		`SELECT COUNT(*) FROM attempts 
+		 WHERE user_id=$1 AND test_id=$2`,
+		userID, testID,
+	).Scan(&count)
+
+	return count, err
+}
+
+func GetPreviousModule(moduleID int64) (int64, error) {
+
+	var chapterID int64
+	var orderIndex int
+
+	err := database.DB.QueryRow(context.Background(),
+		`SELECT chapter_id, order_index 
+		 FROM modules 
+		 WHERE id=$1`,
+		moduleID,
+	).Scan(&chapterID, &orderIndex)
+
+	if err != nil {
+		return 0, err
+	}
+
+	var prevID int64
+
+	err = database.DB.QueryRow(context.Background(),
+		`SELECT id FROM modules
+		 WHERE chapter_id=$1 AND order_index=$2`,
+		chapterID, orderIndex-1,
+	).Scan(&prevID)
+
+	if err != nil {
+		// первый модуль
+		return 0, nil
+	}
+
+	return prevID, nil
+}
+
+func IsModuleCompleted(userID, moduleID int64) (bool, error) {
+
+	var total int
+
+	err := database.DB.QueryRow(context.Background(),
+		`SELECT COUNT(q.id)
+		 FROM tests t
+		 JOIN questions q ON q.test_id = t.id
+		 WHERE t.module_id=$1`,
+		moduleID,
+	).Scan(&total)
+
+	if err != nil {
+		return false, err
+	}
+
+	var exists bool
+
+	err = database.DB.QueryRow(context.Background(),
+		`SELECT EXISTS (
+			SELECT 1 FROM attempts a
+			JOIN tests t ON t.id = a.test_id
+			WHERE t.module_id=$1
+			AND a.user_id=$2
+			AND a.score=$3
+		)`,
+		moduleID, userID, total,
+	).Scan(&exists)
+
+	return exists, err
+}
+
+func CanAccessModule(userID, moduleID int64) (bool, error) {
+
+	prevID, err := GetPreviousModule(moduleID)
+	if err != nil {
+		return false, err
+	}
+
+	// первый модуль
+	if prevID == 0 {
+		return true, nil
+	}
+
+	return IsModuleCompleted(userID, prevID)
 }

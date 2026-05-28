@@ -34,14 +34,14 @@ export class RegisterComponent {
   onSubmit() {
 
     if (this.registerForm.invalid) {
-      this.messageService.showErrorMessage('Заполните все поля!');
+      this.messageService.showErrorMessage('Барлық өрістерді толтырыңыз!');
       return;
     }
 
     const { full_name, email, password, confirm_password } = this.registerForm.value;
 
     if (password !== confirm_password) {
-      this.messageService.showErrorMessage('Пароли не совпадают!');
+      this.messageService.showErrorMessage('Құпия сөздер сәйкес келмейді!');
       return;
     }
 
@@ -55,14 +55,14 @@ export class RegisterComponent {
         first(),
         catchError((err) => {
           this.messageService.showErrorMessage(
-            'Ошибка регистрации. Попробуйте ещё раз.'
+            'Тіркелу кезінде қате пайда болды. Қайталап көріңіз.'
           );
           return throwError(() => err);
         })
       )
       .subscribe(() => {
 
-        this.messageService.showSuccessMessage('Регистрация успешна!');
+        this.messageService.showSuccessMessage('Тіркелу сәтті өтті!');
 
         this.router.navigate(['/auth/login']);
 

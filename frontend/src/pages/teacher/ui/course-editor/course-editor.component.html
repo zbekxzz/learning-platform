@@ -1,0 +1,110 @@
+<div class="editor-container">
+  <div class="header">
+    <div class="header-text">
+      <a routerLink="/main/teacher/courses" class="back-link">← Курстарға қайту</a>
+      <h1>Курсты өңдеу: {{ course()?.title }}</h1>
+      <p class="subtitle">Курс құрылымын қалыптастырыңыз</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="openChapterModal()">+ Чаптер қосу</button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="state-container loading">
+      <span class="spinner"></span>
+      <p>Құрылым жүктелуде...</p>
+    </div>
+  } @else if (error()) {
+    <div class="state-container error">
+      <div class="error-icon">⚠️</div>
+      <p>{{ error() }}</p>
+      <button class="btn-retry" (click)="loadCourseData()">Қайтадан байқап көру</button>
+    </div>
+  } @else {
+    <div class="structure-list">
+      @for (item of structure(); track item.chapter.id) {
+        <div class="chapter-card">
+          <div class="chapter-header" (click)="toggleChapter(item.chapter.id)">
+            <div class="chapter-title-group">
+              <span class="chevron" [class.expanded]="expandedChapters().has(item.chapter.id)">▶</span>
+              <h3>{{ item.chapter.title }}</h3>
+            </div>
+            <button class="btn-secondary btn-sm" (click)="openModuleModal(item.chapter.id); $event.stopPropagation()">
+              + Модуль
+            </button>
+          </div>
+          
+          @if (expandedChapters().has(item.chapter.id)) {
+            <div class="module-list">
+              @if (item.modules && item.modules.length > 0) {
+                @for (mod of item.modules; track mod.id) {
+                  <a [routerLink]="['/main/teacher/courses', courseId, 'modules', mod.id, 'edit']" class="module-item">
+                    <div class="module-info">
+                      <span class="icon">📄</span>
+                      <span class="module-title">{{ mod.title }}</span>
+                    </div>
+                    <span class="edit-hint">Өңдеу →</span>
+                  </a>
+                }
+              } @else {
+                <div class="empty-modules">Бұл чаптерде әлі модуль жоқ</div>
+              }
+            </div>
+          }
+        </div>
+      } @empty {
+        <div class="state-container empty">
+          <p>Курста әлі ешқандай чаптер жоқ. Оқу бағдарламасын жасау үшін чаптер қосыңыз.</p>
+          <button class="btn-primary" (click)="openChapterModal()">+ Чаптер қосу</button>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Add Chapter Modal -->
+@if (isChapterModalOpen()) {
+  <div class="modal-backdrop" (click)="closeChapterModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Жаңа чаптер қосу</h2>
+        <button class="close-btn" (click)="closeChapterModal()">&times;</button>
+      </div>
+
+      <form [formGroup]="chapterForm" (ngSubmit)="saveChapter()">
+        <div class="form-group">
+          <label>Чаптер атауы</label>
+          <input type="text" formControlName="title" placeholder="Чаптердің атауын енгізіңіз">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeChapterModal()">Болдырмау</button>
+          <button type="submit" class="btn-primary" [disabled]="isSaving()">Сақтау</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Add Module Modal -->
+@if (isModuleModalOpen()) {
+  <div class="modal-backdrop" (click)="closeModuleModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Жаңа модуль қосу</h2>
+        <button class="close-btn" (click)="closeModuleModal()">&times;</button>
+      </div>
+
+      <form [formGroup]="moduleForm" (ngSubmit)="saveModule()">
+        <div class="form-group">
+          <label>Модуль атауы</label>
+          <input type="text" formControlName="title" placeholder="Модульдің атауын енгізіңіз">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeModuleModal()">Болдырмау</button>
+          <button type="submit" class="btn-primary" [disabled]="isSaving()">Сақтау</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

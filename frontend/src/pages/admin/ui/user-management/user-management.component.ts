@@ -52,7 +52,7 @@ export class AdminUserManagementComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to load users', err);
-        this.error.set('Не удалось загрузить список пользователей.');
+        this.error.set('Пайдаланушылар тізімін жүктеу мүмкін болмады.');
         this.isLoading.set(false);
       }
     });
@@ -114,13 +114,13 @@ export class AdminUserManagementComponent implements OnInit {
         console.error('Failed to save user', err);
         // Тут можно было бы показать локальную ошибку формы
         this.isSaving.set(false);
-        alert('Ошибка при сохранении пользователя');
+        alert('Пайдаланушыны сақтау кезінде қате пайда болды');
       }
     });
   }
 
   deleteUser(id: number) {
-    if (!confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+    if (!confirm('Бұл пайдаланушыны жойғыңыз келетініне сенімдісіз бе?')) {
       return;
     }
 
@@ -130,7 +130,7 @@ export class AdminUserManagementComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to delete user', err);
-        alert('Не удалось удалить пользователя.');
+        alert('Пайдаланушыны жою мүмкін болмады.');
       }
     });
   }

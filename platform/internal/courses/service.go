@@ -23,13 +23,28 @@ func CreateCourse(title, description string, createdBy int64, role string) (*Cou
 	return course, nil
 }
 
-func PublishCourse(id int64, role string) error {
+func TogglePublishCourse(id int64, userID int64, role string) error {
 
-	if role != "admin" && role != "teacher" {
-		return errors.New("forbidden")
+	if role == "admin" {
+		return TogglePublish(id)
 	}
 
-	return Publish(id)
+	if role == "teacher" {
+		course, err := GetByID(id)
+		if err != nil {
+			return errors.New("course not found")
+		}
+		if course.CreatedBy != userID {
+			return errors.New("forbidden: not your course")
+		}
+		return TogglePublish(id)
+	}
+
+	return errors.New("forbidden")
+}
+
+func GetTeacherCourses(userID int64) ([]Course, error) {
+	return GetByCreator(userID)
 }
 
 func DeleteCourse(id int64, role string) error {

@@ -1,15 +1,15 @@
 <div class="profile-container">
-  <h1>Профиль пользователя</h1>
+  <h1>Пайдаланушы профилі</h1>
 
   @if (isLoading()) {
   <div class="state-container loading">
     <span class="spinner"></span>
-    <p>Загрузка профиля...</p>
+    <p>Профиль жүктелуде...</p>
   </div>
   } @else if (error()) {
   <div class="state-container error">
     <p>{{ error() }}</p>
-    <button class="btn-retry" (click)="loadProfile()">Попробовать снова</button>
+    <button class="btn-retry" (click)="loadProfile()">Қайтадан байқап көру</button>
   </div>
   } @else {
   @if (profile(); as p) {
@@ -34,21 +34,21 @@
   }
 
   <div class="my-courses-section">
-    <h3>Мои курсы</h3>
+    <h3>Менің курстарым</h3>
 
     @if (isLoadingCourses()) {
     <div class="state-container loading-small">
       <span class="spinner"></span>
-      <p>Загрузка ваших курсов...</p>
+      <p>Курстарыңыз жүктелуде...</p>
     </div>
     } @else if (coursesError()) {
     <div class="state-container error">
       <p>{{ coursesError() }}</p>
-      <button class="btn-retry" (click)="loadMyCourses()">Попробовать снова</button>
+      <button class="btn-retry" (click)="loadMyCourses()">Қайтадан байқап көру</button>
     </div>
     } @else {
     @if (myCourses().length === 0) {
-    <p class="placeholder-text">У вас пока нет начатых курсов.</p>
+    <p class="placeholder-text">Сізде әзірге басталған курстар жоқ.</p>
     } @else {
     <div class="courses-grid">
       @for (course of myCourses(); track course.id) {
@@ -58,7 +58,7 @@
         <div class="card-footer">
           <span class="course-date">{{ course.created_at | date:'dd.MM.yyyy' }}</span>
           <!-- Assuming the route is under /main/courses/course/:id/learn -->
-          <a [routerLink]="['/main/courses/course', course.id, 'learn']" class="btn-primary">Продолжить</a>
+          <a [routerLink]="['/main/courses/course', course.id, 'learn']" class="btn-primary">Жалғастыру</a>
         </div>
       </div>
       }

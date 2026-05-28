@@ -23,6 +23,14 @@ func startTest(c *gin.Context) {
 
 	test, questions, answers, err := StartTest(userID, moduleID)
 	if err != nil {
+
+		if err.Error() == "module locked" {
+			c.JSON(403, gin.H{
+				"error": "Алдымен алдыңғы модульді аяқтаңыз",
+			})
+			return
+		}
+
 		c.JSON(500, gin.H{"error": "failed"})
 		return
 	}
@@ -71,7 +79,6 @@ func startFinalTest(c *gin.Context) {
 }
 
 func submitTest(c *gin.Context) {
-
 	var req struct {
 		TestID  int64                  `json:"test_id"`
 		Answers map[string]interface{} `json:"answers"`
@@ -86,10 +93,26 @@ func submitTest(c *gin.Context) {
 
 	score, err := SubmitTest(req.Answers, req.TestID, userID)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+
+		if err.Error() == "test already passed" {
+			c.JSON(400, gin.H{
+				"error": "Тест уже пройден",
+			})
+			return
+		}
+
+		if err.Error() == "no attempts left" {
+			c.JSON(400, gin.H{
+				"error": "Попытки закончились",
+			})
+			return
+		}
+
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
-
 	c.JSON(200, gin.H{
 		"score": score,
 	})

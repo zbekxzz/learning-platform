@@ -8,14 +8,14 @@
 
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="login__form">
 
-          <h2 class="login__title">Регистрация</h2>
+          <h2 class="login__title">Тіркелу</h2>
 
           <div class="input__group">
             <input
               type="text"
               formControlName="full_name"
               class="input__field"
-              placeholder="ФИО"
+              placeholder="Аты-жөні"
               required
             />
           </div>
@@ -35,7 +35,7 @@
               type="password"
               formControlName="password"
               class="input__field"
-              placeholder="Пароль"
+              placeholder="Құпия сөз"
               autocomplete="off"
               required
             />
@@ -46,18 +46,18 @@
               type="password"
               formControlName="confirm_password"
               class="input__field"
-              placeholder="Повторите пароль"
+              placeholder="Құпия сөзді қайталаңыз"
               autocomplete="off"
               required
             />
           </div>
 
           <button type="submit" class="input__btn">
-            Зарегистрироваться
+            Тіркелу
           </button>
 
           <div class="auth-footer">
-            Есть аккаунта? <a (click)="goToLogin()">Войдите</a>
+            Аккаунтыңыз бар ма? <a (click)="goToLogin()">Кіріңіз</a>
           </div>
 
         </form>
