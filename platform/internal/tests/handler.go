@@ -14,6 +14,8 @@ func RegisterRoutes(rg *gin.RouterGroup) {
 	group.GET("/course/:course_id/final/start", startFinalTest)
 	group.POST("/submit", submitTest)
 	group.POST("/create-full", createFullTest)
+	group.GET("/:id/details", getTestDetails)
+	group.DELETE("/:id", deleteTest)
 }
 
 func startTest(c *gin.Context) {
@@ -35,10 +37,13 @@ func startTest(c *gin.Context) {
 		return
 	}
 
+	passed, _ := IsTestPassed(userID, test.ID, len(questions))
+
 	c.JSON(200, gin.H{
 		"test":      test,
 		"questions": questions,
 		"answers":   answers,
+		"passed":    passed,
 	})
 }
 
@@ -71,10 +76,13 @@ func startFinalTest(c *gin.Context) {
 		return
 	}
 
+	passed, _ := IsTestPassed(userID, test.ID, len(questions))
+
 	c.JSON(200, gin.H{
 		"test":      test,
 		"questions": questions,
 		"answers":   answers,
+		"passed":    passed,
 	})
 }
 
@@ -142,3 +150,44 @@ func createFullTest(c *gin.Context) {
 
 	c.JSON(200, gin.H{"message": "test created"})
 }
+
+func getTestDetails(c *gin.Context) {
+	testID, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	role := c.GetString("role")
+
+	if role != "admin" && role != "teacher" {
+		c.JSON(403, gin.H{"error": "forbidden"})
+		return
+	}
+
+	test, questions, answers, err := GetTestDetailsForTeacher(testID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"test":      test,
+		"questions": questions,
+		"answers":   answers,
+	})
+}
+
+func deleteTest(c *gin.Context) {
+	testID, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	role := c.GetString("role")
+
+	if role != "admin" && role != "teacher" {
+		c.JSON(403, gin.H{"error": "forbidden"})
+		return
+	}
+
+	err := DeleteTest(testID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "test deleted"})
+}
+

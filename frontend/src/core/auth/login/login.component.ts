@@ -61,4 +61,9 @@ export class LoginComponent {
   goToRegister() {
     this.router.navigate(['/auth/register']);
   }
+
+  goToRestore() {
+    this.router.navigate(['/auth/restore']);
+  }
 }
+

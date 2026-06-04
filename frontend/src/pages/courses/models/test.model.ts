@@ -1,7 +1,13 @@
 export interface TestItem {
   id: number;
   module_id: number;
+  chapter_id?: number;
+  course_id?: number;
+  title?: string;
+  time_limit?: number;
+  max_attempts?: number;
 }
+
 
 export type QuestionType = 'mcq' | 'open' | 'matching' | string;
 
@@ -27,6 +33,7 @@ export interface TestResponse {
   test: TestItem;
   questions: TestQuestion[];
   answers: Record<number, TestAnswerOption[]>;
+  passed?: boolean;
 }
 
 export interface TestSubmitPayload {

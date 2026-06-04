@@ -21,10 +21,11 @@ func CreateModule(m *Module) error {
 
 func GetModulesByChapter(chapterID int64) ([]Module, error) {
 	rows, _ := database.DB.Query(context.Background(),
-		`SELECT id, chapter_id, title, order_index
-		 FROM modules
-		 WHERE chapter_id=$1
-		 ORDER BY order_index`, chapterID)
+		`SELECT m.id, m.chapter_id, m.title, m.order_index,
+		        EXISTS (SELECT 1 FROM tests t WHERE t.module_id = m.id) as has_test
+		 FROM modules m
+		 WHERE m.chapter_id=$1
+		 ORDER BY m.order_index`, chapterID)
 
 	defer rows.Close()
 
@@ -32,7 +33,7 @@ func GetModulesByChapter(chapterID int64) ([]Module, error) {
 
 	for rows.Next() {
 		var m Module
-		rows.Scan(&m.ID, &m.ChapterID, &m.Title, &m.OrderIndex)
+		rows.Scan(&m.ID, &m.ChapterID, &m.Title, &m.OrderIndex, &m.HasTest)
 		result = append(result, m)
 	}
 

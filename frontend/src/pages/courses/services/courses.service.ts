@@ -71,8 +71,23 @@ export class CoursesService {
   }
 
   // Create a new material
-  addMaterial(data: { module_id: number; title: string; type: string; content?: string; order_index: number }): Observable<ModuleMaterial> {
+  addMaterial(data: { 
+    module_id: number; 
+    title: string; 
+    type: string; 
+    content?: string; 
+    file_url?: string; 
+    external_url?: string; 
+    order_index: number 
+  }): Observable<ModuleMaterial> {
     return this.api.post<ModuleMaterial>('/back/modules/material', data);
+  }
+
+  // Upload file
+  uploadFile(file: File): Observable<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.api.postWithoutHeaders2<{ url: string }>('/back/modules/upload', formData);
   }
 
   // Reorder materials
@@ -80,5 +95,21 @@ export class CoursesService {
     return this.api.put(`/back/modules/${moduleId}/materials/reorder`, { updates });
   }
 
+  markModuleCompletedInDB(moduleId: number): Observable<any> {
+    return this.api.post('/back/progress/complete', { module_id: moduleId });
+  }
+
+  getCompletedModulesFromDB(): Observable<number[]> {
+    return this.api.get<number[]>('/back/progress/completed');
+  }
+
+  getCourseStatistics(courseId: number): Observable<any[]> {
+    return this.api.get<any[]>(`/back/courses/${courseId}/statistics`);
+  }
+
+  getMyCertificates(): Observable<any[]> {
+    return this.api.get<any[]>('/back/certificates/my');
+  }
 }
+
 

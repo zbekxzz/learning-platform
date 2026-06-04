@@ -24,6 +24,11 @@ export class TeacherCourseManagementComponent implements OnInit {
   isCreating = signal<boolean>(false);
   courseForm: FormGroup;
 
+  isStatsModalOpen = signal<boolean>(false);
+  statsLoading = signal<boolean>(false);
+  statsData = signal<any[]>([]);
+  selectedCourseTitle = signal<string>('');
+
   constructor(
     private coursesService: CoursesService,
     private fb: FormBuilder
@@ -99,5 +104,29 @@ export class TeacherCourseManagementComponent implements OnInit {
         alert('Курсты жасау кезінде қате пайда болды.');
       }
     });
+  }
+
+  openStatisticsModal(course: Course) {
+    this.selectedCourseTitle.set(course.title);
+    this.statsLoading.set(true);
+    this.isStatsModalOpen.set(true);
+    this.statsData.set([]);
+
+    this.coursesService.getCourseStatistics(course.id).subscribe({
+      next: (data) => {
+        this.statsData.set(data || []);
+        this.statsLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load course statistics', err);
+        alert('Курс статистикасын жүктеу мүмкін болмады.');
+        this.statsLoading.set(false);
+        this.closeStatisticsModal();
+      }
+    });
+  }
+
+  closeStatisticsModal() {
+    this.isStatsModalOpen.set(false);
   }
 }

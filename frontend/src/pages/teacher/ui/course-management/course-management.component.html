@@ -69,6 +69,9 @@
                     {{ course.is_published ? 'Жасыру' : 'Жариялау' }}
                   }
                 </button>
+                <button (click)="openStatisticsModal(course)" class="btn-stats">
+                  Статистика
+                </button>
                 <a [routerLink]="['/main/teacher/courses', course.id, 'edit']" class="btn-edit">
                   Редакциялау
                 </a>
@@ -118,6 +121,78 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+}
+
+<!-- Statistics Modal -->
+@if (isStatsModalOpen()) {
+  <div class="modal-backdrop" (click)="closeStatisticsModal()">
+    <div class="modal-content stats-modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Курс статистикасы: {{ selectedCourseTitle() }}</h2>
+        <button class="close-btn" (click)="closeStatisticsModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        @if (statsLoading()) {
+          <div class="modal-state loading">
+            <span class="spinner"></span>
+            <p>Статистика жүктелуде...</p>
+          </div>
+        } @else {
+          <div class="stats-table-wrapper">
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>Студент</th>
+                  <th>Прогресс</th>
+                  <th>Сертификат</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (student of statsData(); track student.user_id) {
+                  <tr>
+                    <td>
+                      <div class="student-info">
+                        <span class="student-name">{{ student.full_name || 'Студент' }}</span>
+                        <span class="student-email">{{ student.email }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="progress-container">
+                        <div class="progress-bar-bg">
+                          <div class="progress-bar-fill" [style.width.%]="student.percentage"></div>
+                        </div>
+                        <span class="progress-text">
+                          {{ student.completed_count }}/{{ student.total_count }} ({{ student.percentage }}%)
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      @if (student.certificate_url) {
+                        <a [href]="student.certificate_url" target="_blank" class="certificate-link">
+                          <span class="cert-icon">🏆</span> Жүктеу
+                        </a>
+                      } @else {
+                        <span class="no-cert">Жоқ</span>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="3" class="empty-stats">Бұл курсқа әлі ешкім тіркелмеген.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeStatisticsModal()">Жабу</button>
+      </div>
     </div>
   </div>
 }

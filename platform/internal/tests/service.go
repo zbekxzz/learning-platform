@@ -3,7 +3,9 @@ package tests
 import (
 	"context"
 	"fmt"
+	"log"
 	"platform/internal/database"
+	"platform/internal/certificates"
 	"strconv"
 	"strings"
 )
@@ -60,7 +62,7 @@ func StartTest(userID, moduleID int64) (*Test, []Question, map[int64]interface{}
 	return test, questions, answerMap, nil
 }
 
-func StartChapterTest(userID, chapterID int64) (*Test, []Question, map[int64][]Answer, error) {
+func StartChapterTest(userID, chapterID int64) (*Test, []Question, map[int64]interface{}, error) {
 
 	test, err := GetTestByChapter(chapterID)
 	if err != nil {
@@ -69,16 +71,33 @@ func StartChapterTest(userID, chapterID int64) (*Test, []Question, map[int64][]A
 
 	questions, _ := GetQuestions(test.ID)
 
-	answerMap := make(map[int64][]Answer)
+	answerMap := make(map[int64]interface{})
 
-	for _, q := range questions {
-		ans, _ := GetAnswers(q.ID)
+	for i, q := range questions {
 
-		for i := range ans {
-			ans[i].IsCorrect = false
+		switch q.Type {
+		case "mcq":
+
+			ans, _ := GetAnswers(q.ID)
+
+			for i := range ans {
+				ans[i].IsCorrect = false
+			}
+
+			answerMap[q.ID] = ans
+
+		case "matching":
+
+			pairs, options, _ := GetMatchingPairs(q.ID)
+
+			questions[i].Pairs = pairs
+			questions[i].Options = options
+
+			answerMap[q.ID] = []interface{}{}
+
+		case "open":
+			answerMap[q.ID] = []interface{}{}
 		}
-
-		answerMap[q.ID] = ans
 	}
 
 	CreateAttempt(userID, test.ID)
@@ -86,7 +105,7 @@ func StartChapterTest(userID, chapterID int64) (*Test, []Question, map[int64][]A
 	return test, questions, answerMap, nil
 }
 
-func StartFinalTest(userID, courseID int64) (*Test, []Question, map[int64][]Answer, error) {
+func StartFinalTest(userID, courseID int64) (*Test, []Question, map[int64]interface{}, error) {
 
 	test, err := GetFinalTest(courseID)
 	if err != nil {
@@ -95,16 +114,33 @@ func StartFinalTest(userID, courseID int64) (*Test, []Question, map[int64][]Answ
 
 	questions, _ := GetQuestions(test.ID)
 
-	answerMap := make(map[int64][]Answer)
+	answerMap := make(map[int64]interface{})
 
-	for _, q := range questions {
-		ans, _ := GetAnswers(q.ID)
+	for i, q := range questions {
 
-		for i := range ans {
-			ans[i].IsCorrect = false
+		switch q.Type {
+		case "mcq":
+
+			ans, _ := GetAnswers(q.ID)
+
+			for i := range ans {
+				ans[i].IsCorrect = false
+			}
+
+			answerMap[q.ID] = ans
+
+		case "matching":
+
+			pairs, options, _ := GetMatchingPairs(q.ID)
+
+			questions[i].Pairs = pairs
+			questions[i].Options = options
+
+			answerMap[q.ID] = []interface{}{}
+
+		case "open":
+			answerMap[q.ID] = []interface{}{}
 		}
-
-		answerMap[q.ID] = ans
 	}
 
 	CreateAttempt(userID, test.ID)
@@ -112,13 +148,17 @@ func StartFinalTest(userID, courseID int64) (*Test, []Question, map[int64][]Answ
 	return test, questions, answerMap, nil
 }
 
+
 func SubmitTest(userAnswers map[string]interface{}, testID int64, userID int64) (int, error) {
 	var maxAttempts int
+	var testType string
+	var moduleID int64
+	var courseID int64
 
 	err := database.DB.QueryRow(context.Background(),
-		`SELECT max_attempts FROM tests WHERE id=$1`,
+		`SELECT max_attempts, type, COALESCE(module_id, 0), COALESCE(course_id, 0) FROM tests WHERE id=$1`,
 		testID,
-	).Scan(&maxAttempts)
+	).Scan(&maxAttempts, &testType, &moduleID, &courseID)
 
 	if err != nil {
 		return 0, err
@@ -267,6 +307,29 @@ func SubmitTest(userAnswers map[string]interface{}, testID int64, userID int64) 
 
 	if err != nil {
 		return 0, err
+	}
+
+	isPassed := score == totalQuestions
+	if isPassed {
+		if testType == "module" && moduleID != 0 {
+			_, err = database.DB.Exec(context.Background(),
+				`INSERT INTO progress (user_id, module_id, is_completed)
+				 VALUES ($1,$2,TRUE)
+				 ON CONFLICT (user_id, module_id)
+				 DO UPDATE SET is_completed=TRUE`,
+				userID, moduleID)
+			if err != nil {
+				log.Println("Warning: failed to record progress upon passing test:", err)
+			}
+		} else if testType == "final" && courseID != 0 {
+			// Trigger certificate generation in a goroutine
+			go func() {
+				_, err := certificates.GenerateCertificate(userID, courseID)
+				if err != nil {
+					log.Println("Error generating certificate:", err)
+				}
+			}()
+		}
 	}
 
 	return score, nil
@@ -477,3 +540,75 @@ func CanAccessModule(userID, moduleID int64) (bool, error) {
 
 	return IsModuleCompleted(userID, prevID)
 }
+
+func GetTestDetailsForTeacher(testID int64) (*Test, []Question, map[int64]interface{}, error) {
+	ctx := context.Background()
+	row := database.DB.QueryRow(ctx,
+		`SELECT id, module_id, chapter_id, course_id, title, time_limit, max_attempts, type, created_at
+		 FROM tests WHERE id=$1`, testID)
+
+	var t Test
+	err := row.Scan(&t.ID, &t.ModuleID, &t.ChapterID, &t.CourseID, &t.Title, &t.TimeLimit, &t.MaxAttempts, &t.Type, &t.CreatedAt)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	questions, err := GetQuestions(t.ID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	answerMap := make(map[int64]interface{})
+
+	for _, q := range questions {
+		switch q.Type {
+		case "mcq":
+			rows, err := database.DB.Query(ctx,
+				`SELECT id, question_id, text, is_correct
+				 FROM answers WHERE question_id=$1`, q.ID)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			ans := []TeacherAnswer{}
+			for rows.Next() {
+				var a TeacherAnswer
+				rows.Scan(&a.ID, &a.QuestionID, &a.Text, &a.IsCorrect)
+				ans = append(ans, a)
+			}
+			rows.Close()
+			answerMap[q.ID] = ans
+
+		case "matching":
+			rows, err := database.DB.Query(ctx,
+				`SELECT id, left_text, right_text FROM matching_pairs WHERE question_id=$1`, q.ID)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			type TeacherPair struct {
+				Left  string `json:"left"`
+				Right string `json:"right"`
+			}
+			pairs := []TeacherPair{}
+			for rows.Next() {
+				var pid int64
+				var left, right string
+				rows.Scan(&pid, &left, &right)
+				pairs = append(pairs, TeacherPair{Left: left, Right: right})
+			}
+			rows.Close()
+			answerMap[q.ID] = pairs
+
+		case "open":
+			var correctText string
+			err := database.DB.QueryRow(ctx,
+				`SELECT correct_text FROM questions WHERE id=$1`, q.ID).Scan(&correctText)
+			if err != nil {
+				correctText = ""
+			}
+			answerMap[q.ID] = correctText
+		}
+	}
+
+	return &t, questions, answerMap, nil
+}
+

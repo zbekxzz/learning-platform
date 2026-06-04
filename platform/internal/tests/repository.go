@@ -140,3 +140,27 @@ func GetMatchingPairs(questionID int64) ([]map[string]string, []string, error) {
 
 	return pairs, options, nil
 }
+
+func DeleteTest(testID int64) error {
+	ctx := context.Background()
+	tx, err := database.DB.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// Delete attempts first since it has a foreign key to tests without cascade
+	_, err = tx.Exec(ctx, `DELETE FROM attempts WHERE test_id = $1`, testID)
+	if err != nil {
+		return err
+	}
+
+	// due to cascade rules on database questions, answers and matching pairs will delete automatically
+	_, err = tx.Exec(ctx, `DELETE FROM tests WHERE id = $1`, testID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+

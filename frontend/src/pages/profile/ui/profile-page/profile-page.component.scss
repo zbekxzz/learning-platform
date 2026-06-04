@@ -139,7 +139,7 @@
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
-  
+
   .btn-retry {
     padding: 8px 16px;
     background-color: #2563eb;
@@ -151,3 +151,166 @@
     cursor: pointer;
     margin-top: 16px;
   }
+
+.my-courses-section, .my-certificates-section {
+  margin-top: 40px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 24px;
+
+  h3 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .placeholder-text {
+    color: #6b7280;
+    background: #f9fafb;
+    padding: 32px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px dashed #d1d5db;
+  }
+}
+
+.courses-grid, .certificates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.course-card, .certificate-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+}
+
+.course-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.course-desc {
+  font-size: 14px;
+  color: #4b5563;
+  margin-top: 8px;
+  flex-grow: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.5;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.course-date {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.btn-primary {
+  padding: 8px 16px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #1d4ed8;
+  }
+}
+
+.certificate-card {
+  position: relative;
+  border-top: 4px solid #f59e0b; // Gold accent
+  
+  .cert-ribbon-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+    
+    .cert-gold-badge {
+      font-size: 32px;
+    }
+  }
+
+  .cert-info {
+    text-align: center;
+    margin-bottom: 16px;
+
+    .cert-course-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 8px 0;
+      line-height: 1.4;
+    }
+
+    .cert-date {
+      font-size: 12px;
+      color: #6b7280;
+      margin: 0;
+    }
+  }
+
+  .cert-actions {
+    display: flex;
+    justify-content: center;
+  }
+
+  .btn-cert-download {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 16px;
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #fef3c7;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+    }
+  }
+}
+
+.loading-small {
+  padding: 24px;
+  p {
+    font-size: 14px;
+  }
+}

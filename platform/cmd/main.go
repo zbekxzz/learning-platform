@@ -19,6 +19,8 @@ import (
 	"platform/internal/users"
 
 	"platform/internal/storage"
+	"platform/internal/progress"
+	"platform/internal/certificates"
 )
 
 func main() {
@@ -47,6 +49,8 @@ func main() {
 	modules.RegisterRoutes(protected)
 	tests.RegisterRoutes(protected)
 	users.RegisterRoutes(protected)
+	progress.RegisterRoutes(protected)
+	certificates.RegisterRoutes(protected)
 
 	port := os.Getenv("PORT")
 	if port == "" {

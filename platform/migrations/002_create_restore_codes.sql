@@ -1,0 +1,7 @@
+CREATE TABLE restore_codes (
+    id BIGSERIAL PRIMARY KEY,
+    email VARCHAR(150) NOT NULL,
+    code VARCHAR(10) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

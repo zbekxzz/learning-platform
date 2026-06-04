@@ -22,6 +22,7 @@ export interface CourseModule {
   course_id: number;
   title: string;
   order_index: number;
+  has_test?: boolean;
   created_at: string;
 }
 
@@ -36,7 +37,9 @@ export interface CourseChapter {
 export interface CourseStructureItem {
   chapter: CourseChapter;
   modules: CourseModule[] | null;
+  chapter_test?: any;
 }
+
 
 export type ModuleStatus = 'locked' | 'available' | 'completed';
 

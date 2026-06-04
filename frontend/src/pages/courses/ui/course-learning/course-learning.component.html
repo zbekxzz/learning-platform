@@ -40,15 +40,15 @@
             </svg>
           </div>
 
-          @if (expandedChapters().has(item.chapter.id) && item.modules?.length) {
+          @if (expandedChapters().has(item.chapter.id) && (item.modules?.length || item.chapter_test)) {
           <div class="modules-list">
             @for (mod of item.modules; track mod.id) {
-            <div class="module-item" [class.active]="mod.id === moduleId()"
+            <div class="module-item" [class.active]="mod.id === moduleId() && !isFinalExamActive()"
               [class.locked]="moduleStatuses()[mod.id] === 'locked'"
               [class.completed]="moduleStatuses()[mod.id] === 'completed'" (click)="navigateToModule(mod.id)">
 
               <div class="mod-icon">
-                @if (mod.id === moduleId()) {
+                @if (mod.id === moduleId() && !isFinalExamActive()) {
                 <span class="icon-active">▶</span>
                 } @else if (moduleStatuses()[mod.id] === 'completed') {
                 <span class="icon-completed">✓</span>
@@ -62,12 +62,28 @@
               <div class="mod-info">
                 <span class="mod-index">{{ mod.order_index }}.</span>
                 <span class="mod-title">{{ mod.title }}</span>
+                @if (mod.has_test) {
+                  <span class="test-badge" [class.passed]="moduleStatuses()[mod.id] === 'completed'">Тест</span>
+                }
               </div>
             </div>
             }
+
           </div>
           }
+
         </div>
+        }
+
+        @if (isCourseFinished()) {
+          <div class="chapter-block final-exam-block" style="margin-top: 16px;">
+            <div class="chapter-header" (click)="loadFinalExam()" [class.active]="isFinalExamActive()" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; cursor: pointer;">
+              <div class="ch-text">
+                <span class="ch-index" style="color: #2563eb; font-weight: bold;">ҚОРЫТЫНДЫ</span>
+                <span class="ch-title" style="color: #1e3a8a; font-weight: 600;">🎓 Қорытынды емтихан</span>
+              </div>
+            </div>
+          </div>
         }
       </div>
     </div>
@@ -77,164 +93,286 @@
   <div class="learning-main">
     <div class="main-scroll-area">
 
-      <div class="content-header">
-        <span class="ch-name">{{ currentChapterTitle() }}</span>
-        <h1 class="mod-name">{{ currentModuleTitle() }}</h1>
-      </div>
+      @if (isFinalExamActive()) {
+        <div class="content-header">
+          <span class="ch-name">Қорытынды емтихан</span>
+          <h1 class="mod-name">Курс бойынша қорытынды тест</h1>
+        </div>
 
-      <div class="material-blocks">
-        @for (block of materials(); track block.id) {
-
-        @if (block.type === 'text') {
-          <div class="block-text" [innerHTML]="block.content"></div>
-        }
-
-        @if (block.type === 'video') {
-          <div class="block-video">
-            <iframe [src]="safeUrl(block.content)" frameborder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen></iframe>
-          </div>
-        }
-
-        @if (block.type === 'pdf' && block.file_url) {
-          <div class="block-pdf">
-            <iframe [src]="safeUrl(block.file_url)" width="100%" height="800px"></iframe>
-          </div>
-        }
-
-        @if ((block.type === 'image' || block.type === 'gif') && block.file_url) {
-          <div class="block-image">
-            <img [src]="block.file_url" [alt]="block.title" />
-          </div>
-        }
-
-        @if (block.type === 'pptx' && block.file_url) {
-          <div class="block-pptx">
-            <div class="pptx-icon">📊</div>
-            <div class="pptx-info">
-              <h4>{{ block.title }}</h4>
-              <p>Жүктеп алуға арналған презентация</p>
-            </div>
-            <a [href]="block.file_url" target="_blank" class="btn-download">
-              Жүктеп алу
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-            </a>
-          </div>
-        }
-
-        @if (block.type === 'lab') {
-          <div class="block-lab">
-            <div class="lab-header">
-              <span class="icon">🧪</span>
-              <span>Практикалық тапсырма</span>
-            </div>
-            <div class="lab-content" [innerHTML]="block.content"></div>
-          </div>
-        }
-
-        @if (block.type === 'interactive') {
-          <div class="block-interactive">
-            <div class="tabs-header">
-              @for (tab of block.content; track $index) {
-              <button class="tab-btn" [class.active]="(activeTabIndexes()[block.id] || 0) === $index"
-                (click)="setActiveTab(block.id, $index)">
-                {{ tab.title }}
-              </button>
+        @if (testData()) {
+          <div class="quiz-block">
+            <h3>Білімді тексеру</h3>
+            
+            @if (testPassed()) {
+              @if (isFinalExamActive()) {
+                <div class="quiz-success" style="display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 32px; border-radius: 12px; background: #ecfdf5; border: 2px solid #a7f3d0; text-align: center; margin-bottom: 24px;">
+                  <span style="font-size: 48px;">🏆</span>
+                  <h4 style="color: #065f46; font-size: 20px; font-weight: bold; margin: 0;">Құттықтаймыз! Сіз курсты сәтті аяқтадыңыз!</h4>
+                  <p style="color: #047857; margin: 0 0 16px 0;">Сіздің сертификатыңыз дайын. Төмендегі сілтеме арқылы жүктеп ала аласыз:</p>
+                  @if (certificateUrl()) {
+                    <a [href]="certificateUrl()" target="_blank" class="btn-submit" style="display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; background: #059669; color: white; width: auto; border: none; text-align: center;">
+                      Сертификатты жүктеу (SVG)
+                    </a>
+                  } @else {
+                    <p style="color: #059669; font-style: italic;">Сертификат жүктелуде...</p>
+                  }
+                </div>
+              } @else {
+                <div class="quiz-success" style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px; border-radius: 10px; background: #ecfdf5; border: 1px solid #a7f3d0; text-align: center; margin-bottom: 20px;">
+                  <span style="font-size: 32px;">🏆</span>
+                  <h4 style="color: #065f46; font-size: 16px; font-weight: bold; margin: 0;">Сіз бұл тестті сәтті тапсырғансыз!</h4>
+                  <p style="color: #047857; margin: 0;">Нәтижеңіз сақталынды. Оқуды жалғастыра аласыз.</p>
+                </div>
               }
-            </div>
-            <div class="tab-body">
-              {{ block.content[activeTabIndexes()[block.id] || 0].body }}
-            </div>
-          </div>
-        }
-        }
-      </div>
+            } @else {
+              <div class="questions-list">
+                @for (q of testQuestions(); track q.id) {
+                  <div class="question-item">
+                    <p class="quiz-question">{{ (q.id) + '. ' + q.question_text }}</p>
 
-      <!-- QUIZ BLOCK -->
-      @if (testData()) {
-        <div class="quiz-block">
-          <h3>Білімді тексеру</h3>
-          
-          <div class="questions-list">
-            @for (q of testQuestions(); track q.id) {
-              <div class="question-item">
-                <p class="quiz-question">{{ (q.id) + '. ' + q.question_text }}</p>
-
-                <!-- TYPE: MCQ -->
-                @if (q.type === 'mcq') {
-                  <div class="quiz-options">
-                    @for (a of testAnswers()[q.id]; track a.id) {
-                      <label class="quiz-option" 
-                             [class.selected]="userAnswers()[q.id] === a.id"
-                             [class.disabled]="quizSubmitted()">
-                        <input type="radio" 
-                               [name]="'q' + q.id" 
-                               [disabled]="quizSubmitted()"
-                               (change)="setUserAnswer(q.id, a.id)"
-                               [checked]="userAnswers()[q.id] === a.id">
-                        <span class="opt-text">{{ a.text }}</span>
-                      </label>
-                    }
-                  </div>
-                }
-
-                <!-- TYPE: OPEN -->
-                @if (q.type === 'open') {
-                  <div class="quiz-open">
-                    <textarea placeholder="Жауабыңызды енгізіңіз..."
-                              [disabled]="quizSubmitted()"
-                              [value]="userAnswers()[q.id] || ''"
-                              (input)="setUserAnswer(q.id, $any($event.target).value)"></textarea>
-                  </div>
-                }
-
-                <!-- TYPE: MATCHING -->
-                @if (q.type === 'matching' && q.pairs && q.options) {
-                  <div class="quiz-matching">
-                    @for (pair of q.pairs; track pair.left) {
-                      <div class="match-pair">
-                        <span class="match-left">{{ pair.left }}</span>
-                        <span class="match-separator">→</span>
-                        <select [disabled]="quizSubmitted()"
-                                (change)="onMatchChange(q.id, pair.left, $event)">
-                          <option value="">-- Таңдаңыз --</option>
-                          @for (opt of q.options; track opt) {
-                            <option [value]="opt" [selected]="userAnswers()[q.id]?.[pair.left] === opt">
-                              {{ opt }}
-                            </option>
-                          }
-                        </select>
+                    <!-- TYPE: MCQ -->
+                    @if (q.type === 'mcq') {
+                      <div class="quiz-options">
+                        @for (a of testAnswers()[q.id]; track a.id) {
+                          <label class="quiz-option" 
+                                 [class.selected]="userAnswers()[q.id] === a.id"
+                                 [class.disabled]="quizSubmitted()">
+                            <input type="radio" 
+                                   [name]="'q' + q.id" 
+                                   [disabled]="quizSubmitted()"
+                                   (change)="setUserAnswer(q.id, a.id)"
+                                   [checked]="userAnswers()[q.id] === a.id">
+                            <span class="opt-text">{{ a.text }}</span>
+                          </label>
+                        }
                       </div>
                     }
+
+                    <!-- TYPE: OPEN -->
+                    @if (q.type === 'open') {
+                      <div class="quiz-open">
+                        <textarea placeholder="Жауабыңызды енгізіңіз..."
+                                  [disabled]="quizSubmitted()"
+                                  [value]="userAnswers()[q.id] || ''"
+                                  (input)="setUserAnswer(q.id, $any($event.target).value)"></textarea>
+                      </div>
+                    }
+
+                    <!-- TYPE: MATCHING -->
+                    @if (q.type === 'matching' && q.pairs && q.options) {
+                      <div class="quiz-matching">
+                        @for (pair of q.pairs; track pair.left) {
+                          <div class="match-pair">
+                            <span class="match-left">{{ pair.left }}</span>
+                            <span class="match-separator">→</span>
+                            <select [disabled]="quizSubmitted()"
+                                    (change)="onMatchChange(q.id, pair.left, $event)">
+                              <option value="">-- Таңдаңыз --</option>
+                              @for (opt of q.options; track opt) {
+                                <option [value]="opt" [selected]="userAnswers()[q.id]?.[pair.left] === opt">
+                                  {{ opt }}
+                                </option>
+                              }
+                            </select>
+                          </div>
+                        }
+                      </div>
+                    }
+
                   </div>
                 }
-
               </div>
+
+              <!-- Validation/Errors -->
+              @if (quizError()) {
+                <p class="quiz-error">{{ quizError() }}</p>
+              }
+
+              <!-- Submission Area -->
+              @if (!quizSubmitted()) {
+                <button class="btn-submit" (click)="submitTest()" [disabled]="isSubmitDisabled()">Жауаптарды жіберу</button>
+              } @else {
+                <div class="quiz-success" style="display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 32px; border-radius: 12px; background: #fef2f2; border: 2px solid #fca5a5; text-align: center;">
+                  <span style="font-size: 48px;">❌</span>
+                  <h4 style="color: #991b1b; font-size: 20px; font-weight: bold; margin: 0;">Емтиханнан өте алмадыңыз</h4>
+                  <p style="color: #b91c1c; margin: 0;">Сертификат алу үшін барлық сұрақтарға дұрыс жауап беру қажет. Қайталап көріңіз.</p>
+                </div>
+              }
             }
           </div>
+        } @else {
+          <div class="empty-selection">
+            <div class="icon">📝</div>
+            <p>Бұл курс үшін қорытынды емтихан әлі дайындалмаған.</p>
+          </div>
+        }
+      } @else {
+        <!-- STANDARD MODULE VIEW -->
+        <div class="content-header">
+          <span class="ch-name">{{ currentChapterTitle() }}</span>
+          <h1 class="mod-name">{{ currentModuleTitle() }}</h1>
+        </div>
 
-          <!-- Validation/Errors -->
-          @if (quizError()) {
-            <p class="quiz-error">{{ quizError() }}</p>
+        <div class="material-blocks">
+          @for (block of materials(); track block.id) {
+
+          @if (block.type === 'text') {
+            <div class="block-text" [innerHTML]="block.content"></div>
           }
 
-          <!-- Submission Area -->
-          @if (!quizSubmitted()) {
-            <button class="btn-submit" (click)="submitTest()" [disabled]="isSubmitDisabled()">Жауаптарды жіберу</button>
-          } @else {
-            <div class="quiz-success">
-              <span class="success-icon">🏆</span> 
-              <span>Керемет! Сіздің нәтижеңіз: <strong>{{ quizScore() }}</strong>. Сабақ сәтті өтті.</span>
+          @if (block.type === 'video') {
+            <div class="block-video">
+              <iframe [src]="safeUrl(block.content)" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen></iframe>
             </div>
           }
-        </div>
-      }
 
+          @if (block.type === 'pdf' && block.file_url) {
+            <div class="block-pdf">
+              <iframe [src]="safeUrl(block.file_url)" width="100%" height="800px"></iframe>
+            </div>
+          }
+
+          @if ((block.type === 'image' || block.type === 'gif') && block.file_url) {
+            <div class="block-image">
+              <img [src]="block.file_url" [alt]="block.title" />
+            </div>
+          }
+
+          @if (block.type === 'pptx' && block.file_url) {
+            <div class="block-pptx">
+              <div class="pptx-icon">📊</div>
+              <div class="pptx-info">
+                <h4>{{ block.title }}</h4>
+                <p>Жүктеп алуға арналған презентация</p>
+              </div>
+              <a [href]="block.file_url" target="_blank" class="btn-download">
+                Жүктеп алу
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </a>
+            </div>
+          }
+
+          @if (block.type === 'lab') {
+            <div class="block-lab">
+              <div class="lab-header">
+                <span class="icon">🧪</span>
+                <span>Практикалық тапсырма</span>
+              </div>
+              <div class="lab-content" [innerHTML]="block.content"></div>
+            </div>
+          }
+
+          @if (block.type === 'interactive') {
+            <div class="block-interactive">
+              <div class="tabs-header">
+                @for (tab of block.content; track $index) {
+                <button class="tab-btn" [class.active]="(activeTabIndexes()[block.id] || 0) === $index"
+                  (click)="setActiveTab(block.id, $index)">
+                  {{ tab.title }}
+                </button>
+                }
+              </div>
+              <div class="tab-body">
+                {{ block.content[activeTabIndexes()[block.id] || 0].body }}
+              </div>
+            </div>
+          }
+          }
+        </div>
+
+        <!-- QUIZ BLOCK -->
+        @if (testData()) {
+          <div class="quiz-block">
+            <h3>Білімді тексеру</h3>
+            
+            @if (testPassed()) {
+              <div class="quiz-success">
+                <span class="success-icon">🏆</span> 
+                <span>Сіз бұл тестті сәтті тапсырғансыз! Нәтижеңіз сақталынды.</span>
+              </div>
+            } @else {
+              <div class="questions-list">
+                @for (q of testQuestions(); track q.id) {
+                  <div class="question-item">
+                    <p class="quiz-question">{{ (q.id) + '. ' + q.question_text }}</p>
+
+                    <!-- TYPE: MCQ -->
+                    @if (q.type === 'mcq') {
+                      <div class="quiz-options">
+                        @for (a of testAnswers()[q.id]; track a.id) {
+                          <label class="quiz-option" 
+                                 [class.selected]="userAnswers()[q.id] === a.id"
+                                 [class.disabled]="quizSubmitted()">
+                            <input type="radio" 
+                                   [name]="'q' + q.id" 
+                                   [disabled]="quizSubmitted()"
+                                   (change)="setUserAnswer(q.id, a.id)"
+                                   [checked]="userAnswers()[q.id] === a.id">
+                            <span class="opt-text">{{ a.text }}</span>
+                          </label>
+                        }
+                      </div>
+                    }
+
+                    <!-- TYPE: OPEN -->
+                    @if (q.type === 'open') {
+                      <div class="quiz-open">
+                        <textarea placeholder="Жауабыңызды енгізіңіз..."
+                                  [disabled]="quizSubmitted()"
+                                  [value]="userAnswers()[q.id] || ''"
+                                  (input)="setUserAnswer(q.id, $any($event.target).value)"></textarea>
+                      </div>
+                    }
+
+                    <!-- TYPE: MATCHING -->
+                    @if (q.type === 'matching' && q.pairs && q.options) {
+                      <div class="quiz-matching">
+                        @for (pair of q.pairs; track pair.left) {
+                          <div class="match-pair">
+                            <span class="match-left">{{ pair.left }}</span>
+                            <span class="match-separator">→</span>
+                            <select [disabled]="quizSubmitted()"
+                                    (change)="onMatchChange(q.id, pair.left, $event)">
+                              <option value="">-- Таңдаңыз --</option>
+                              @for (opt of q.options; track opt) {
+                                <option [value]="opt" [selected]="userAnswers()[q.id]?.[pair.left] === opt">
+                                  {{ opt }}
+                                </option>
+                              }
+                            </select>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                  </div>
+                }
+              </div>
+
+              <!-- Validation/Errors -->
+              @if (quizError()) {
+                <p class="quiz-error">{{ quizError() }}</p>
+              }
+
+              <!-- Submission Area -->
+              @if (!quizSubmitted()) {
+                <button class="btn-submit" (click)="submitTest()" [disabled]="isSubmitDisabled()">Жауаптарды жіберу</button>
+              } @else {
+                <div class="quiz-success">
+                  <span class="success-icon">🏆</span> 
+                  <span>Керемет! Сіздің нәтижеңіз: <strong>{{ quizScore() }}</strong>. Сабақ сәтті өтті.</span>
+                </div>
+              }
+            }
+          </div>
+        }
+      }
     </div>
 
     <!-- BOTTOM NAVIGATION FOOTER -->

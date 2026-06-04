@@ -5,7 +5,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { CoursesService } from '../../services/courses.service';
 import { Course, CourseModule, CourseStructureItem, ModuleMaterial, ModuleStatus } from '../../models/course.model';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, catchError } from 'rxjs';
 import { TestService } from '../../services/test.service';
 import { TestItem, TestQuestion, TestAnswerOption } from '../../models/test.model';
 
@@ -53,6 +53,16 @@ export class CourseLearningComponent implements OnInit {
   quizSubmitted = signal<boolean>(false);
   quizScore = signal<number | null>(null);
   quizError = signal<string | null>(null);
+  testPassed = signal<boolean>(false);
+  isFinalExamActive = signal<boolean>(false);
+  certificateUrl = signal<string | null>(null);
+
+  isCourseFinished = computed(() => {
+    const statuses = this.moduleStatuses();
+    const total = Object.keys(statuses).length;
+    if (total === 0) return false;
+    return Object.values(statuses).every(s => s === 'completed');
+  });
 
   // Derived properties for template convenience
   currentChapterTitle = signal<string>('');
@@ -96,32 +106,31 @@ export class CourseLearningComponent implements OnInit {
 
     forkJoin({
       course: this.coursesService.getCourse(id),
-      structure: this.coursesService.getCourseStructure(id)
+      structure: this.coursesService.getCourseStructure(id),
+      completedFromDB: this.coursesService.getCompletedModulesFromDB().pipe(catchError(() => of([])))
     }).subscribe({
       next: (res) => {
         this.course.set(res.course);
         this.structure.set(res.structure || []);
 
-        // Mock statuses initialization
-        // We'll set the first module to 'available', the rest to 'locked' temporarily
-        // Wait, for demo purposes, if user has this course, let's make the first 2 available, and some locked.
-        const st: Record<number, ModuleStatus> = {};
-        let isFirst = true;
+        // Sync local storage with DB progress
+        const storageKey = `user_${this.getUserIdFromToken()}_course_${id}_completed_modules`;
+        let completedIds: number[] = res.completedFromDB || [];
+        
+        const completedJson = localStorage.getItem(storageKey);
+        if (completedJson) {
+          try {
+            const localIds = JSON.parse(completedJson);
+            localIds.forEach((mId: number) => {
+              if (!completedIds.includes(mId)) {
+                completedIds.push(mId);
+              }
+            });
+          } catch(e) {}
+        }
+        localStorage.setItem(storageKey, JSON.stringify(completedIds));
 
-        (res.structure || []).forEach(item => {
-          (item.modules || []).forEach((mod: CourseModule) => {
-            // If first module, make available. Later ones make locked.
-            // But if user clicks around, we don't want to enforce locking strictly in frontend, 
-            // although we should to demo it. Let's make all of Chapter 1 available.
-            if (item.chapter.order_index === 1) {
-              st[mod.id] = (mod.order_index <= 2) ? 'completed' : 'available';
-            } else {
-              st[mod.id] = 'locked';
-            }
-          });
-        });
-
-        this.moduleStatuses.set(st);
+        this.recalculateModuleStatuses();
 
         // Handle redirect if no moduleId is provided
         if (!this.moduleId()) {
@@ -135,18 +144,17 @@ export class CourseLearningComponent implements OnInit {
           if (firstModId) {
             this.isLoading.set(false);
             this.router.navigate(['/main/courses/course', id, 'learn', firstModId], { replaceUrl: true });
-            return; // Exit here, let the paramMap subscription handle subsequent setup
+            return;
           } else {
-            // In case the course has no modules whatsoever
             this.isLoading.set(false);
             return;
           }
         }
 
-        // Structure is now ready, update nav pointers for current active module
         this.updateNavPointers(this.moduleId());
         this.isLoading.set(false);
       },
+
       error: (err) => {
         console.error('Жүктеу қатесі', err);
         this.isLoading.set(false);
@@ -160,6 +168,7 @@ export class CourseLearningComponent implements OnInit {
     this.quizSubmitted.set(false);
     this.quizScore.set(null);
     this.quizError.set(null);
+    this.testPassed.set(false);
     this.activeTabIndexes.set({});
     this.userAnswers.set({});
     this.testData.set(null);
@@ -171,6 +180,16 @@ export class CourseLearningComponent implements OnInit {
       next: (materials) => {
         // Sort by order_index just in case
         materials.sort((a, b) => a.order_index - b.order_index);
+        materials.forEach(m => {
+          if (m.type === 'interactive' && typeof m.content === 'string') {
+            try {
+              m.content = JSON.parse(m.content);
+            } catch (e) {
+              console.error('Failed to parse interactive content', e);
+              m.content = [];
+            }
+          }
+        });
         this.materials.set(materials);
       },
       error: (err) => {
@@ -195,13 +214,23 @@ export class CourseLearningComponent implements OnInit {
           
           this.testQuestions.set(questions);
           this.testAnswers.set(res.answers || {});
+
+          if (res.passed) {
+            this.testPassed.set(true);
+            this.quizSubmitted.set(true);
+            this.markModuleCompleted(moduleId);
+          }
+        } else {
+          this.markModuleCompleted(moduleId);
         }
       },
       error: (err) => {
         console.warn('Бұл модуль үшін тест табылмады немесе қолжетімсіз.');
+        this.markModuleCompleted(moduleId);
       }
     });
   }
+
 
   // Find prev/next IDs safely traversing chapters and modules
   updateNavPointers(currentModId: number) {
@@ -251,6 +280,7 @@ export class CourseLearningComponent implements OnInit {
     // Block navigation if locked
     if (statuses[modId] === 'locked') return;
 
+    this.isFinalExamActive.set(false);
     this.router.navigate(['/main/courses/course', this.courseId(), 'learn', modId]);
   }
 
@@ -285,6 +315,83 @@ export class CourseLearningComponent implements OnInit {
     return Object.keys(this.userAnswers()).length === 0 && qCount > 0;
   }
 
+  getUserIdFromToken(): string {
+    const token = localStorage.getItem('Token');
+    if (!token) return 'guest';
+    try {
+      const parts = token.split('.');
+      if (parts.length < 2) return 'guest';
+      const payload = JSON.parse(atob(parts[1]));
+      return payload.user_id || 'guest';
+    } catch (e) {
+      return 'guest';
+    }
+  }
+
+  recalculateModuleStatuses() {
+    const struct = this.structure();
+    const flatMods: CourseModule[] = [];
+    struct.forEach(item => {
+      const mods = item.modules || [];
+      mods.forEach((mod: CourseModule) => {
+        flatMods.push(mod);
+      });
+    });
+
+    const storageKey = `user_${this.getUserIdFromToken()}_course_${this.courseId()}_completed_modules`;
+    const completedJson = localStorage.getItem(storageKey);
+    let completedIds: number[] = [];
+    if (completedJson) {
+      try {
+        completedIds = JSON.parse(completedJson);
+      } catch(e) {
+        completedIds = [];
+      }
+    }
+
+    const st: Record<number, ModuleStatus> = {};
+    flatMods.forEach((mod, index) => {
+      if (completedIds.includes(mod.id)) {
+        st[mod.id] = 'completed';
+      } else if (index === 0) {
+        st[mod.id] = 'available';
+      } else {
+        const prevMod = flatMods[index - 1];
+        if (st[prevMod.id] === 'completed') {
+          st[mod.id] = 'available';
+        } else {
+          st[mod.id] = 'locked';
+        }
+      }
+    });
+
+    this.moduleStatuses.set(st);
+  }
+
+  markModuleCompleted(moduleId: number) {
+    const storageKey = `user_${this.getUserIdFromToken()}_course_${this.courseId()}_completed_modules`;
+    const completedJson = localStorage.getItem(storageKey);
+    let completedIds: number[] = [];
+    if (completedJson) {
+      try {
+        completedIds = JSON.parse(completedJson);
+      } catch(e) {
+        completedIds = [];
+      }
+    }
+    if (!completedIds.includes(moduleId)) {
+      completedIds.push(moduleId);
+      localStorage.setItem(storageKey, JSON.stringify(completedIds));
+
+      this.coursesService.markModuleCompletedInDB(moduleId).subscribe({
+        next: () => console.log(`Persisted completion of module ${moduleId} inside DB.`),
+        error: (err) => console.warn('Failed to sync completed module in DB:', err)
+      });
+    }
+
+    this.recalculateModuleStatuses();
+  }
+
   // Quiz submission
   submitTest() {
     const test = this.testData();
@@ -301,25 +408,70 @@ export class CourseLearningComponent implements OnInit {
         this.quizScore.set(res.score);
         this.quizError.set(null);
 
-        // Update status to completed!
-        this.moduleStatuses.update(dict => {
-          return { ...dict, [this.moduleId()]: 'completed' };
-        });
-
-        // Auto-unlock next module
-        const nextId = this.nextModuleId();
-        if (nextId) {
-          this.moduleStatuses.update(dict => {
-            if (dict[nextId] === 'locked') {
-              return { ...dict, [nextId]: 'available' };
-            }
-            return dict;
-          });
+        if (this.moduleId()) {
+          this.markModuleCompleted(this.moduleId());
+        } else if (this.isFinalExamActive()) {
+          const qCount = this.testQuestions().length;
+          if (res.score === qCount) {
+            this.testPassed.set(true);
+            setTimeout(() => {
+              this.loadCertificateLink();
+            }, 1500);
+          }
         }
       },
       error: (err) => {
-        this.quizError.set('Тестті жіберу кезінде қате пайда болды. Толтыру дұрыстығын тексеріңіз.');
+        const errorMsg = err.error?.error || 'Тестті жіберу кезінде қате пайда болды. Толтыру дұрыстығын тексеріңіз.';
+        this.quizError.set(errorMsg);
         this.quizSubmitted.set(false);
+      }
+    });
+  }
+
+  loadFinalExam() {
+    this.moduleId.set(0);
+    this.isFinalExamActive.set(true);
+    this.materials.set([]);
+
+    this.quizSubmitted.set(false);
+    this.quizScore.set(null);
+    this.quizError.set(null);
+    this.testPassed.set(false);
+    this.testData.set(null);
+    this.testQuestions.set([]);
+    this.testAnswers.set({});
+
+    this.testService.startFinalTest(this.courseId()).subscribe({
+      next: (res) => {
+        if (res && res.test) {
+          this.testData.set(res.test);
+          const questions = (res.questions || []).map(q => {
+            if (!q.type) q.type = 'mcq';
+            return q;
+          });
+          this.testQuestions.set(questions);
+          this.testAnswers.set(res.answers || {});
+          
+          if (res.passed) {
+            this.testPassed.set(true);
+            this.quizSubmitted.set(true);
+            this.loadCertificateLink();
+          }
+        }
+      },
+      error: (err) => {
+        console.warn('Final exam is not available or not created yet.');
+      }
+    });
+  }
+
+  loadCertificateLink() {
+    this.coursesService.getMyCertificates().subscribe({
+      next: (certs) => {
+        const courseCert = certs.find(c => c.course_id === this.courseId());
+        if (courseCert) {
+          this.certificateUrl.set(courseCert.certificate_url);
+        }
       }
     });
   }
@@ -329,3 +481,4 @@ export class CourseLearningComponent implements OnInit {
     return this.sanitizer.bypassSecurityTrustResourceUrl(url || '');
   }
 }
+

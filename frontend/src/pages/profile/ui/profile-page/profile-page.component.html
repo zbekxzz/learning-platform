@@ -66,4 +66,43 @@
     }
     }
   </div>
+
+  <div class="my-certificates-section">
+    <h3>Менің сертификаттарым</h3>
+
+    @if (isLoadingCertificates()) {
+      <div class="state-container loading-small">
+        <span class="spinner"></span>
+        <p>Сертификаттар жүктелуде...</p>
+      </div>
+    } @else if (certificatesError()) {
+      <div class="state-container error">
+        <p>{{ certificatesError() }}</p>
+        <button class="btn-retry" (click)="loadCertificates()">Қайтадан байқап көру</button>
+      </div>
+    } @else {
+      @if (certificates().length === 0) {
+        <p class="placeholder-text">Сізде әлі алынған сертификаттар жоқ. Курсты толық аяқтап, қорытынды емтихан тапсырыңыз!</p>
+      } @else {
+        <div class="certificates-grid">
+          @for (cert of certificates(); track cert.id) {
+            <div class="certificate-card">
+              <div class="cert-ribbon-wrapper">
+                <span class="cert-gold-badge">🏆</span>
+              </div>
+              <div class="cert-info">
+                <h4 class="cert-course-title">{{ cert.course_title }}</h4>
+                <p class="cert-date">Аяқталған күні: {{ cert.created_at | date:'dd.MM.yyyy' }}</p>
+              </div>
+              <div class="cert-actions">
+                <a [href]="cert.certificate_url" target="_blank" class="btn-cert-download">
+                  Жүктеу
+                </a>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
 </div>

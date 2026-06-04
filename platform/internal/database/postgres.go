@@ -19,4 +19,18 @@ func Connect() {
 	}
 
 	DB = pool
+
+	_, err = DB.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS certificates (
+			id SERIAL PRIMARY KEY,
+			user_id BIGINT NOT NULL,
+			course_id BIGINT NOT NULL,
+			certificate_url VARCHAR(255) NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			CONSTRAINT unique_user_course_certificate UNIQUE (user_id, course_id)
+		);
+	`)
+	if err != nil {
+		log.Println("Warning: failed to create certificates table:", err)
+	}
 }

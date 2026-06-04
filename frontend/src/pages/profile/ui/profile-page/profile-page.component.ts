@@ -4,6 +4,7 @@ import { ProfileService } from '../../services/profile.service';
 import { UserProfile } from '../../models/profile.model';
 import { Course } from '../../../courses/models/course.model';
 import { RouterLink } from '@angular/router';
+import { CoursesService } from '../../../courses/services/courses.service';
 
 @Component({
   selector: 'app-profile-page',
@@ -21,11 +22,19 @@ export class ProfilePageComponent implements OnInit {
   isLoadingCourses = signal<boolean>(true);
   coursesError = signal<string | null>(null);
 
-  constructor(private profileService: ProfileService) {}
+  certificates = signal<any[]>([]);
+  isLoadingCertificates = signal<boolean>(true);
+  certificatesError = signal<string | null>(null);
+
+  constructor(
+    private profileService: ProfileService,
+    private coursesService: CoursesService
+  ) {}
 
   ngOnInit() {
     this.loadProfile();
     this.loadMyCourses();
+    this.loadCertificates();
   }
 
   loadProfile() {
@@ -58,6 +67,23 @@ export class ProfilePageComponent implements OnInit {
         console.error('Error fetching my courses:', err);
         this.coursesError.set('Курстарыңызды жүктеу мүмкін болмады.');
         this.isLoadingCourses.set(false);
+      }
+    });
+  }
+
+  loadCertificates() {
+    this.isLoadingCertificates.set(true);
+    this.certificatesError.set(null);
+
+    this.coursesService.getMyCertificates().subscribe({
+      next: (data) => {
+        this.certificates.set(data || []);
+        this.isLoadingCertificates.set(false);
+      },
+      error: (err) => {
+        console.error('Error fetching certificates:', err);
+        this.certificatesError.set('Сертификаттарыңызды жүктеу мүмкін болмады.');
+        this.isLoadingCertificates.set(false);
       }
     });
   }

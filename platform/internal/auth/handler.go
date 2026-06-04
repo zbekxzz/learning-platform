@@ -11,6 +11,9 @@ func RegisterRoutes(rg *gin.RouterGroup) {
 	auth := rg.Group("/auth")
 	auth.POST("/register", register)
 	auth.POST("/login", login)
+	auth.POST("/restore/request", requestRestoreCode)
+	auth.POST("/restore/verify", verifyRestoreCode)
+	auth.POST("/restore/reset", resetPassword)
 
 	protected := rg.Group("/user")
 	protected.Use(middleware.JWT())
@@ -75,3 +78,65 @@ func profile(c *gin.Context) {
 		"role":      user.Role,
 	})
 }
+
+func requestRestoreCode(c *gin.Context) {
+	var req struct {
+		Email string `json:"email"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+
+	err := RequestRestoreCode(req.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "code sent"})
+}
+
+func verifyRestoreCode(c *gin.Context) {
+	var req struct {
+		Email string `json:"email"`
+		Code  string `json:"code"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+
+	err := VerifyRestoreCode(req.Email, req.Code)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "code verified"})
+}
+
+func resetPassword(c *gin.Context) {
+	var req struct {
+		Email           string `json:"email"`
+		Code            string `json:"code"`
+		Password        string `json:"password"`
+		ConfirmPassword string `json:"confirm_password"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+
+	err := ResetPassword(req.Email, req.Code, req.Password, req.ConfirmPassword)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "password changed"})
+}
+

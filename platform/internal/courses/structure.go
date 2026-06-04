@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"platform/internal/chapters"
 	"platform/internal/modules"
+	"platform/internal/tests"
 )
 
 func GetCourseStructure(c *gin.Context) {
@@ -27,11 +28,20 @@ func GetCourseStructure(c *gin.Context) {
 		// 2. темы (modules)
 		modList, _ := modules.GetModulesByChapter(ch.ID)
 
+		// 3. тест главы
+		var chTest interface{} = nil
+		t, err := tests.GetTestByChapter(ch.ID)
+		if err == nil {
+			chTest = t
+		}
+
 		result = append(result, gin.H{
-			"chapter": ch,
-			"modules": modList,
+			"chapter":      ch,
+			"modules":      modList,
+			"chapter_test": chTest,
 		})
 	}
 
 	c.JSON(http.StatusOK, result)
 }
+

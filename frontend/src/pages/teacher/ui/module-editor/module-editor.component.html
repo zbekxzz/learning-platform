@@ -12,6 +12,24 @@
         <span class="spinner"></span>
       </div>
     } @else {
+      <div class="sidebar-test-section">
+        <h3>Модуль тесті</h3>
+        @if (moduleTest()) {
+          <div class="test-item-sidebar">
+            <div class="test-info">
+              <span class="icon">📝</span>
+              <span class="test-title" [title]="moduleTest().title">{{ moduleTest().title }}</span>
+            </div>
+            <div class="test-actions">
+              <button class="btn-secondary btn-xs" (click)="openEditTestModal(moduleTest())">Өңдеу</button>
+              <button class="btn-danger btn-xs" (click)="deleteTestConfirmation(moduleTest().id)">Өшіру</button>
+            </div>
+          </div>
+        } @else {
+          <button class="btn-secondary btn-full btn-sm" (click)="openAddTestModal()">+ Тест қосу</button>
+        }
+      </div>
+
       <div 
         class="materials-list" 
         cdkDropList 
@@ -35,14 +53,11 @@
               <span class="title">{{ mat.title }}</span>
             </div>
           </div>
-        } @empty {
-          <div class="empty-state">
-            <p>Әзірге материалдар жоқ</p>
-          </div>
         }
       </div>
     }
   </aside>
+
 
   <!-- Right Panel: Editor Area -->
   <main class="content-area">
@@ -88,15 +103,205 @@
         </div>
 
         <div class="form-group">
-          <label>Мәтін (қалауыңызша)</label>
-          <textarea formControlName="content" rows="6" placeholder="Материал мәтінін осында жазыңыз"></textarea>
+          <label>Материал түрі</label>
+          <select formControlName="type" class="form-select">
+            <option value="text">Мәтін (Текст)</option>
+            <option value="pdf">PDF файл</option>
+            <option value="pptx">Презентация (PPTX)</option>
+            <option value="video">Видео</option>
+            <option value="lab">Практикалық зертхана (Lab)</option>
+            <option value="gif">GIF анимация</option>
+            <option value="image">Сурет (Image)</option>
+            <option value="interactive">Интерактивті қосымша (Tabs)</option>
+          </select>
         </div>
+
+        @if (materialForm.get('type')?.value === 'text' || materialForm.get('type')?.value === 'lab') {
+          <div class="form-group">
+            <label>Мазмұны</label>
+            <textarea formControlName="content" rows="6" placeholder="Материал мәтінін немесе зертхана нұсқаулығын осында жазыңыз"></textarea>
+          </div>
+        }
+
+        @if (materialForm.get('type')?.value === 'video') {
+          <div class="form-group">
+            <label>Видео сілтемесі (YouTube Embed немесе тікелей сілтеме)</label>
+            <input type="text" formControlName="content" placeholder="https://www.youtube.com/embed/...">
+          </div>
+        }
+
+        @if (materialForm.get('type')?.value === 'pdf' || materialForm.get('type')?.value === 'pptx' || materialForm.get('type')?.value === 'image' || materialForm.get('type')?.value === 'gif') {
+          <div class="form-group">
+            <label>Файл сілтемесі (URL)</label>
+            <input type="text" formControlName="file_url" placeholder="Файл сілтемесін осында енгізіңіз немесе төменнен жүктеңіз">
+          </div>
+          <div class="form-group upload-group">
+            <label class="upload-label">Файлды жүктеу</label>
+            <input type="file" (change)="onFileSelected($event)" class="file-input">
+            @if (isUploading()) {
+              <div class="upload-status">
+                <span class="spinner-sm"></span> Жүктелуде...
+              </div>
+            }
+          </div>
+        }
+
+        @if (materialForm.get('type')?.value === 'interactive') {
+          <div class="interactive-tabs-section">
+            <div class="tabs-header-row-edit">
+              <label>Қосымша бөлімдері (Tabs)</label>
+              <button type="button" class="btn-secondary btn-sm" (click)="addTab()">+ Бөлім қосу</button>
+            </div>
+            
+            <div formArrayName="tabs" class="tabs-list-form">
+              @for (tab of tabs.controls; track $index) {
+                <div [formGroupName]="$index" class="tab-form-row">
+                  <div class="tab-header-row">
+                    <span>Бөлім #{{ $index + 1 }}</span>
+                    <button type="button" class="btn-danger btn-sm" (click)="removeTab($index)">Өшіру</button>
+                  </div>
+                  <div class="form-group">
+                    <label>Бөлім тақырыбы</label>
+                    <input type="text" formControlName="title" placeholder="Тақырып">
+                  </div>
+                  <div class="form-group">
+                    <label>Мазмұны</label>
+                    <textarea formControlName="body" rows="3" placeholder="Мәтін"></textarea>
+                  </div>
+                </div>
+              } @empty {
+                <p class="empty-tabs-hint">Әлі ешқандай бөлім қосылмаған. Бастау үшін «Бөлім қосу» батырмасын басыңыз.</p>
+              }
+            </div>
+          </div>
+        }
 
         <div class="modal-footer">
           <button type="button" class="btn-secondary" (click)="closeMaterialModal()">Болдырмау</button>
+          <button type="submit" class="btn-primary" [disabled]="isSaving() || isUploading()">Сақтау</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Test Builder Modal -->
+@if (isTestModalOpen()) {
+  <div class="modal-backdrop" (click)="closeTestModal()">
+    <div class="modal-content large-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingTestId() ? 'Тестті өңдеу' : 'Жаңа модуль тестін жасау' }}</h2>
+        <button class="close-btn" (click)="closeTestModal()">&times;</button>
+      </div>
+
+      <form [formGroup]="testForm" (ngSubmit)="saveTest()">
+        <div class="form-group">
+          <label>Тест атауы</label>
+          <input type="text" formControlName="title" placeholder="Тақырыпты енгізіңіз">
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Уақыт шегі (минут)</label>
+            <input type="number" formControlName="timeLimit" min="1">
+          </div>
+          <div class="form-group">
+            <label>Максимум әрекет саны</label>
+            <input type="number" formControlName="maxAttempts" min="1">
+          </div>
+        </div>
+
+        <div class="test-questions-section">
+          <div class="questions-header-row">
+            <h3>Сұрақтар тізімі</h3>
+            <button type="button" class="btn-secondary btn-sm" (click)="addQuestion()">+ Сұрақ қосу</button>
+          </div>
+
+          <div formArrayName="questions" class="questions-list-form">
+            @for (q of questions.controls; track q; let qIndex = $index) {
+              <div [formGroupName]="qIndex" class="question-form-card">
+                <div class="question-card-header">
+                  <h4>Сұрақ #{{ qIndex + 1 }}</h4>
+                  <button type="button" class="btn-danger btn-sm" (click)="removeQuestion(qIndex)">Сұрақты өшіру</button>
+                </div>
+
+                <div class="form-group">
+                  <label>Сұрақ түрі</label>
+                  <select formControlName="type" (change)="onQuestionTypeChange(qIndex)" class="form-select">
+                    <option value="mcq">Бірнеше таңдауы бар сұрақ (MCQ)</option>
+                    <option value="open">Ашық сұрақ (Open text)</option>
+                    <option value="matching">Сәйкестендіру сұрағы (Matching)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Сұрақ мәтіні</label>
+                  <textarea formControlName="questionText" rows="2" placeholder="Сұрақты осында жазыңыз"></textarea>
+                </div>
+
+                <!-- MCQ ANSWERS -->
+                @if (q.get('type')?.value === 'mcq') {
+                  <div class="answers-section-builder">
+                    <div class="answers-builder-header">
+                      <h5>Жауап нұсқалары</h5>
+                      <button type="button" class="btn-secondary btn-sm" (click)="addAnswer(qIndex)">+ Нұсқа қосу</button>
+                    </div>
+
+                    <div formArrayName="answers" class="answers-list-builder">
+                      @for (ans of getAnswers(qIndex).controls; track ans; let aIndex = $index) {
+                        <div [formGroupName]="aIndex" class="answer-row-builder">
+                          <input type="checkbox" formControlName="isCorrect" class="checkbox-correct">
+                          <input type="text" formControlName="text" placeholder="Жауап нұсқасы">
+                          <button type="button" class="btn-danger btn-sm" (click)="removeAnswer(qIndex, aIndex)">&times;</button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- OPEN CORRECT TEXT -->
+                @if (q.get('type')?.value === 'open') {
+                  <div class="form-group">
+                    <label>Дұрыс жауабы (мәтін)</label>
+                    <input type="text" formControlName="correctText" placeholder="Дұрыс жауап мәтіні">
+                  </div>
+                }
+
+                <!-- MATCHING PAIRS -->
+                @if (q.get('type')?.value === 'matching') {
+                  <div class="pairs-section-builder">
+                    <div class="pairs-builder-header">
+                      <h5>Сәйкес жұптар</h5>
+                      <button type="button" class="btn-secondary btn-sm" (click)="addPair(qIndex)">+ Жұп қосу</button>
+                    </div>
+
+                    <div formArrayName="pairs" class="pairs-list-builder">
+                      @for (pair of getPairs(qIndex).controls; track pair; let pIndex = $index) {
+                        <div [formGroupName]="pIndex" class="pair-row-builder">
+                          <input type="text" formControlName="left" placeholder="Сол жақ мәні">
+                          <span class="arrow-sep">→</span>
+                          <input type="text" formControlName="right" placeholder="Оң жақ мәні">
+                          <button type="button" class="btn-danger btn-sm" (click)="removePair(qIndex, pIndex)">&times;</button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+              </div>
+            } @empty {
+              <p class="empty-questions-hint">Сұрақтар әлі қосылмаған. Сұрақ қосу үшін жоғарыдағы батырманы басыңыз.</p>
+            }
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeTestModal()">Болдырмау</button>
           <button type="submit" class="btn-primary" [disabled]="isSaving()">Сақтау</button>
         </div>
       </form>
     </div>
   </div>
 }
+
+

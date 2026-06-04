@@ -7,6 +7,7 @@ type Module struct {
 	ChapterID  int64     `json:"chapter_id"`
 	Title      string    `json:"title"`
 	OrderIndex int       `json:"order_index"`
+	HasTest    bool      `json:"has_test"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 

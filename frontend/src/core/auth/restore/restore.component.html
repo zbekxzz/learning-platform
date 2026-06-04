@@ -1,0 +1,90 @@
+<div class="custom-container-fluid">
+  <div class="login">
+    <div class="login-container">
+      <div class="login-content">
+        <div class="login-logo">
+          <span class="logo-accent">Edu</span>Platform
+        </div>
+
+        <form [formGroup]="restoreForm" (ngSubmit)="onSubmit()" class="login__form">
+          <h2 class="login__title">Восстановление</h2>
+
+          <!-- Step 1: Send Code -->
+          @if (step === 1) {
+            <div class="input__group">
+              <input
+                type="email"
+                id="email"
+                formControlName="email"
+                class="input__field"
+                placeholder="Email"
+                required
+              />
+            </div>
+            <button type="submit" class="input__btn">Отправить код</button>
+          }
+
+          <!-- Step 2: Verify Code -->
+          @if (step === 2) {
+            <div class="input__group">
+              <input
+                type="email"
+                id="email-disabled"
+                formControlName="email"
+                class="input__field"
+                placeholder="Email"
+                readonly
+                style="background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed;"
+              />
+            </div>
+
+            <div class="input__group">
+              <input
+                type="text"
+                id="code"
+                formControlName="code"
+                class="input__field"
+                placeholder="Введите код подтверждения"
+                autocomplete="off"
+                required
+              />
+            </div>
+            <button type="submit" class="input__btn">Поменять пароль</button>
+          }
+
+          <!-- Step 3: Reset Password -->
+          @if (step === 3) {
+            <div class="input__group">
+              <input
+                type="password"
+                id="password"
+                formControlName="password"
+                class="input__field"
+                placeholder="Новый пароль"
+                autocomplete="off"
+                required
+              />
+            </div>
+
+            <div class="input__group">
+              <input
+                type="password"
+                id="confirm_password"
+                formControlName="confirm_password"
+                class="input__field"
+                placeholder="Повторите пароль"
+                autocomplete="off"
+                required
+              />
+            </div>
+            <button type="submit" class="input__btn">Поменять пароль</button>
+          }
+
+          <div class="auth-footer">
+            <a (click)="goToLogin()">Вернуться ко входу</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
