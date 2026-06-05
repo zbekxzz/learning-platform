@@ -6,7 +6,7 @@
       <p class="subtitle">Курс құрылымын қалыптастырыңыз</p>
     </div>
     <div class="header-actions">
-      <button class="btn-primary" (click)="openChapterModal()">+ Чаптер қосу</button>
+      <button class="btn-primary" (click)="openChapterModal()">+ Бөлім қосу</button>
     </div>
   </div>
 
@@ -48,15 +48,15 @@
                   </a>
                 }
               } @else {
-                <div class="empty-modules">Бұл чаптерде әлі модуль жоқ</div>
+                <div class="empty-modules">Бұл бөлімде әлі модуль жоқ</div>
               }
             </div>
           }
         </div>
       } @empty {
         <div class="state-container empty">
-          <p>Курста әлі ешқандай чаптер жоқ. Оқу бағдарламасын жасау үшін чаптер қосыңыз.</p>
-          <button class="btn-primary" (click)="openChapterModal()">+ Чаптер қосу</button>
+          <p>Курста әлі ешқандай бөлім жоқ. Оқу бағдарламасын жасау үшін бөлім қосыңыз.</p>
+          <button class="btn-primary" (click)="openChapterModal()">+ Бөлім қосу</button>
         </div>
       }
     </div>
@@ -97,14 +97,14 @@
   <div class="modal-backdrop" (click)="closeChapterModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>Жаңа чаптер қосу</h2>
+        <h2>Жаңа бөлім қосу</h2>
         <button class="close-btn" (click)="closeChapterModal()">&times;</button>
       </div>
 
       <form [formGroup]="chapterForm" (ngSubmit)="saveChapter()">
         <div class="form-group">
-          <label>Чаптер атауы</label>
-          <input type="text" formControlName="title" placeholder="Чаптердің атауын енгізіңіз">
+          <label>Бөлім атауы</label>
+          <input type="text" formControlName="title" placeholder="Бөлімнің атауын енгізіңіз">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn-secondary" (click)="closeChapterModal()">Болдырмау</button>
